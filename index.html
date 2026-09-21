@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tower of Goy — consulta rápida de floors, bosses, modificadores, resistências, afinidades e loadouts.">
+  <meta name="theme-color" content="#111026">
+  <title>Tower of Goy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/cards.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <div class="site-bg"></div>
+  <div class="app-shell">
+    <header class="site-header">
+      <a class="brand" href="#home" aria-label="Tower of Goy - Home">
+        <span class="brand-mark">TG</span>
+        <span><b>TOWER OF GOY</b><small>FLOOR DATABASE</small></span>
+      </a>
+      <nav class="main-nav" aria-label="Navegação principal">
+        <a class="nav-link active" href="#home" data-page="home">Home</a>
+        <a class="nav-link" href="#tower" data-page="tower">Tower</a>
+        <a class="nav-link" href="#info" data-page="info">Info</a>
+      </nav>
+      <button class="mobile-menu" id="mobileMenu" type="button" aria-label="Abrir menu">☰</button>
+    </header>
+
+    <main>
+      <section id="homePage" class="page home-page">
+        <div class="home-hero">
+          <div class="hero-copy">
+            <div class="eyebrow"><span></span> TOWER OF GOY</div>
+            <h1>Encontre o floor.<br><strong>Prepare-se.</strong></h1>
+            <p>Uma central simples para consultar bosses, HP, resistências, afinidades, modificadores e loadouts da Tower of Goy.</p>
+            <div class="hero-actions">
+              <button class="primary-button" id="openTower" type="button">Consultar Tower <span>→</span></button>
+              <a class="secondary-button" href="#info">Como funciona</a>
+            </div>
+          </div>
+          <div class="hero-orbit" aria-hidden="true">
+            <div class="orbit-ring ring-one"></div>
+            <div class="orbit-ring ring-two"></div>
+            <div class="orbit-core"><span>GOY</span><small>DATABASE</small></div>
+          </div>
+        </div>
+
+        <div class="home-search panel">
+          <div class="search-heading">
+            <div><span class="section-kicker">QUICK SEARCH</span><h2>O que você procura?</h2></div>
+            <span class="shortcut">/ para buscar</span>
+          </div>
+          <div class="global-search">
+            <span class="search-icon">⌕</span>
+            <input id="homeSearch" type="search" placeholder="Floor, stage, boss, modifier ou elemento..." autocomplete="off">
+            <button id="homeSearchButton" type="button">Buscar</button>
+          </div>
+          <div id="homeStageChips" class="quick-chips"></div>
+        </div>
+
+        <div class="home-grid">
+          <section class="panel quick-panel">
+            <div class="panel-heading"><div><span class="section-kicker">ACESSO RÁPIDO</span><h2>Consulte por categoria</h2></div></div>
+            <div class="quick-links">
+              <button type="button" data-quick="floor"><span class="quick-icon">#</span><span><b>Floors</b><small>Veja todos os andares e detalhes.</small></span><i>→</i></button>
+              <button type="button" data-quick="modifier"><span class="quick-icon">◆</span><span><b>Modificadores</b><small>Encontre floors com um modifier específico.</small></span><i>→</i></button>
+              <button type="button" data-quick="loadout"><span class="quick-icon">◈</span><span><b>Loadouts</b><small>Veja os floors que já possuem imagem.</small></span><i>→</i></button>
+              <button type="button" data-quick="stage"><span class="quick-icon">◎</span><span><b>Stages</b><small>Pesquise pelo local da Tower.</small></span><i>→</i></button>
+            </div>
+          </section>
+
+          <section class="panel status-panel">
+            <div class="panel-heading"><div><span class="section-kicker">DATABASE</span><h2>Status atual</h2></div><span class="live-dot"><i></i> LIVE</span></div>
+            <div class="home-stats">
+              <div><b id="homeFloorCount">—</b><span>FLOORS</span></div>
+              <div><b id="homeModifierCount">—</b><span>MODIFIERS</span></div>
+              <div><b id="homeStageCount">—</b><span>STAGES</span></div>
+            </div>
+            <div class="sync-line"><span id="homeApiStatus">Conectando aos dados...</span><span id="homeLastSync">—</span></div>
+          </section>
+        </div>
+
+        <section class="panel notice-panel">
+          <div class="notice-icon">i</div>
+          <div><span class="section-kicker">DICA</span><strong>Use a busca para chegar direto ao que precisa.</strong><p>Você pode pesquisar por número do floor, nome do boss, stage, modifier, elemento ou qualquer informação exibida na Tower.</p></div>
+        </section>
+      </section>
+
+      <section id="towerPage" class="page tower-page hidden">
+        <div class="page-heading">
+          <div><span class="section-kicker">TOWER DATABASE</span><h1>Floors</h1><p>Abra qualquer floor para ver todos os parâmetros.</p></div>
+          <div class="page-heading-stats"><span id="apiStatus" class="status"><i></i><span>Conectando</span></span><div class="stat"><b id="floorCount">—</b><small>FLOORS</small></div></div>
+        </div>
+
+        <section class="tower-tools panel">
+          <div class="search-wrap">
+            <span class="search-icon">⌕</span>
+            <input id="searchInput" type="search" placeholder="Buscar floor, stage, boss, modifier ou elemento..." autocomplete="off">
+            <button class="clear-search hidden" id="clearSearch" type="button" aria-label="Limpar busca">×</button>
+          </div>
+          <div class="tool-row">
+            <div class="toolbar-actions">
+              <button class="filter-button active" data-filter="all">Todos</button>
+              <button class="filter-button" data-filter="modifier">Com modificador</button>
+              <button class="filter-button" data-filter="loadout">Com loadout</button>
+            </div>
+            <div class="tower-selects">
+              <select id="stageFilter" aria-label="Filtrar por stage"><option value="all">Todos os stages</option></select>
+              <button id="sortButton" class="small-button" type="button" title="Alternar ordem">↓ 51 → cima</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="result-bar"><span id="resultCount">Carregando...</span><button id="backTop" class="small-button" type="button">↑ Topo</button></div>
+        <div class="table-head">
+          <span>FLOOR</span><span>STAGE / BOSS</span><span>MODIFIER</span><span>BOSS HP</span><span>ENEMY HP</span><span>RESISTÊNCIAS</span><span></span>
+        </div>
+        <section id="towerList" class="tower-list" aria-live="polite">
+          <div class="loading-card"><div class="loader"></div><span>Carregando dados da Tower...</span></div>
+        </section>
+        <div id="emptyState" class="empty-state hidden"><strong>Nenhum floor encontrado</strong><span>Tente outra busca ou altere os filtros.</span><button id="resetFilters" class="primary-button" type="button">Limpar filtros</button></div>
+      </section>
+
+      <section id="infoPage" class="page info-page hidden">
+        <div class="page-heading"><div><span class="section-kicker">INFORMAÇÕES</span><h1>Sobre o site</h1><p>Tudo o que você precisa para usar a base sem ficar procurando informação.</p></div></div>
+        <div class="info-layout">
+          <section class="panel info-card"><span class="section-kicker">COMO USAR</span><h2>Abra um floor e veja os detalhes.</h2><p>Cada linha mostra o resumo do floor. Clique nela para expandir Boss, HP, resistências, afinidades e o espaço de loadout.</p><div class="info-steps"><div><b>01</b><span>Pesquise ou filtre</span></div><div><b>02</b><span>Abra o floor</span></div><div><b>03</b><span>Confira os parâmetros</span></div></div></section>
+          <section class="panel info-card"><span class="section-kicker">DADOS</span><h2>Fonte sincronizada</h2><p>Os dados dos floors são carregados da Google Sheet através do Apps Script. Assim, mudanças na planilha podem aparecer no site sem precisar editar o HTML.</p><div class="source-badge"><i></i> Google Sheets API</div></section>
+          <section class="panel info-card"><span class="section-kicker">LOADOUTS</span><h2>Imagens manuais por floor</h2><p>Quando um floor tiver um loadout, a imagem pode ser adicionada em <code>assets/loadouts/</code> e vinculada pelo arquivo <code>js/loadouts.js</code>.</p></section>
+          <section class="panel info-card credits-card"><span class="section-kicker">CRÉDITOS</span><h2>Tower of Goy</h2><p>Website, interface e implementação:</p><strong class="credit-name">Zenoir</strong><p class="muted">Dados exibidos conforme a fonte sincronizada.</p></section>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span><b>Tower of Goy</b> · Website by <strong>Zenoir</strong></span>
+      <span>Dados sincronizados com Google Sheets</span>
+    </footer>
+  </div>
+
+  <script src="js/loadouts.js"></script>
+  <script src="js/sheets.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
