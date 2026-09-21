@@ -5,18 +5,18 @@
 .floor-summary { width: 100%; min-height: 70px; display: grid; grid-template-columns: 70px minmax(220px, 1.4fr) 1.05fr .8fr .9fr 1.2fr 36px; gap: 12px; align-items: center; border: 0; background: transparent; padding: 9px 18px; text-align: left; }
 .floor-number { font: 800 19px 'Space Mono', monospace; color: #756bea; }
 .stage-boss { min-width: 0; display: grid; gap: 3px; }
-.stage-boss strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
-.stage-boss small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 10px; }
+.stage-boss strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.stage-boss small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 12px; }
 .summary-hp { display: grid; gap: 3px; min-width: 0; }
 .summary-hp b { font: 700 10px 'Space Mono', monospace; white-space: nowrap; }
-.summary-hp small { color: var(--muted-2); font-size: 8px; text-transform: uppercase; letter-spacing: .7px; }
+.summary-hp small { color: var(--muted-2); font-size: 10px; text-transform: uppercase; letter-spacing: .7px; }
 .summary-resists { display: flex; gap: 8px; flex-wrap: wrap; }
-.resistance-item { display: inline-flex; align-items: center; gap: 5px; font: 700 9px 'Space Mono', monospace; color: #c4bfd7; white-space: nowrap; }
+.resistance-item { display: inline-flex; align-items: center; gap: 5px; font: 700 11px 'Space Mono', monospace; color: #c4bfd7; white-space: nowrap; }
 .icon-mask { width: 18px; height: 18px; flex: 0 0 18px; display: inline-block; background-color: var(--icon-color, #a8b2c2); -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-position: center; mask-position: center; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-size: contain; mask-size: contain; }
-.modifier-pill { min-width: 0; display: inline-flex; align-items: center; gap: 6px; color: #ddd9ef; font-size: 10px; font-weight: 700; }
+.modifier-pill { min-width: 0; display: inline-flex; align-items: center; gap: 6px; color: #ddd9ef; font-size: 12px; font-weight: 700; }
 .modifier-icon { width: 22px; height: 22px; flex-basis: 22px; }
 .modifier-fallback { width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid var(--line-strong); color: var(--muted); font: 700 8px 'Space Mono', monospace; }
-.muted-value { color: var(--muted-2); font-size: 10px; }
+.muted-value { color: var(--muted-2); font-size: 12px; }
 .expand-icon { width: 27px; height: 27px; border: 1px solid var(--line); display: grid; place-items: center; color: var(--muted); font-size: 17px; transition: transform .25s, color .2s, border-color .2s; }
 .floor-card.open .expand-icon { transform: rotate(45deg); color: #fff; border-color: #5149a7; }
 .floor-details { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease; }
@@ -27,17 +27,17 @@
 .info-panel { min-height: 176px; background: #101020; padding: 19px; }
 .panel-title { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
 .panel-title span { color: #7067e4; font: 700 8px 'Space Mono', monospace; }
-.panel-title strong { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
-.boss-name { font-size: 20px; font-weight: 800; line-height: 1.15; margin-bottom: 22px; }
+.panel-title strong { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.boss-name { font-size: 22px; font-weight: 800; line-height: 1.15; margin-bottom: 22px; }
 .modifier-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
-.label { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .8px; }
-.hp-row { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+.label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .8px; }
+.hp-row { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 12px; }
 .hp-row:first-of-type { padding-top: 0; }
 .hp-row:last-child { border-bottom: 0; }
 .hp-row b { color: var(--text); font: 700 10px 'Space Mono', monospace; }
 .resistance-list, .affinity-list { display: grid; gap: 8px; }
 .resistance-list .resistance-item, .affinity-item { padding: 8px 9px; border: 1px solid var(--line); background: #141429; }
-.affinity-item { display: grid; grid-template-columns: 20px 1fr auto; gap: 7px; align-items: center; font-size: 10px; }
+.affinity-item { display: grid; grid-template-columns: 20px 1fr auto; gap: 7px; align-items: center; font-size: 12px; }
 .affinity-item b { font: 700 10px 'Space Mono', monospace; }
 .loadout-section { padding: 12px; background: #0c0c18; }
 .loadout-card { display: grid; grid-template-columns: minmax(220px, 42%) 1fr; min-height: 165px; border: 1px solid var(--line); overflow: hidden; background: #101020; }
@@ -45,10 +45,10 @@
 .loadout-image-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .loadout-copy { padding: 20px; display: flex; flex-direction: column; justify-content: center; gap: 7px; }
 .section-label { color: #8178e8; font: 700 8px 'Space Mono', monospace; letter-spacing: 1.3px; }
-.loadout-copy strong { font-size: 16px; }
-.loadout-copy p { color: var(--muted); font-size: 10px; line-height: 1.6; }
+.loadout-copy strong { font-size: 18px; }
+.loadout-copy p { color: var(--muted); font-size: 12px; line-height: 1.6; }
 .loadout-empty { min-height: 90px; border: 1px dashed var(--line-strong); display: flex; align-items: center; gap: 12px; padding: 14px; }
 .loadout-empty-icon { width: 32px; height: 32px; border: 1px dashed #4a456f; display: grid; place-items: center; color: var(--muted); }
 .loadout-empty div:last-child { display: grid; gap: 3px; }
 .loadout-empty strong { font-size: 11px; }
-.loadout-empty span { color: var(--muted-2); font-size: 9px; }
+.loadout-empty span { color: var(--muted-2); font-size: 11px; }
