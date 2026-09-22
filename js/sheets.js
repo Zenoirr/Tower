@@ -1,4 +1,4 @@
-const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbwojad__hJO57oQBZ9VgmctDJqlph6QgQBh8FdEPjlxnaPVtEyFWBL4BFmsnEEdAcVZg/exec';
+const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbwojad__hJO57oQBZ9VgmctDJqlphu6QgQBh8FdEPjlxnaPVtEyFWBL4BFmsnEEdAcVZg/exec';
 
 const ICONS = {
   archetypes: {
@@ -68,85 +68,46 @@ function fetchTowerData() {
 }
 
 function validateTowerPayload(payload) {
-  if (!payload || payload.success !== true) {
-    throw new Error(payload?.error || 'The API returned an invalid response.');
-  }
-
-  if (!Array.isArray(payload.floors)) {
-    throw new Error('The API response does not contain a floors array.');
-  }
-
+  if (!payload || payload.success !== true) throw new Error(payload?.error || 'The API returned an invalid response.');
+  if (!Array.isArray(payload.floors)) throw new Error('The API response does not contain a floors array.');
   return payload.floors;
 }
 
 function fetchTowerDataJSONP() {
   return new Promise((resolve, reject) => {
-    let attempt = 0;
-    let lastError = null;
+    const callbackName = `towerGoyCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const script = document.createElement('script');
+    let finished = false;
 
-    const runAttempt = () => {
-      attempt += 1;
-
-      const callbackName = `towerGoyCallback_${Date.now()}_${attempt}_${Math.random().toString(36).slice(2)}`;
-      const script = document.createElement('script');
-      let finished = false;
-      let timeoutId = null;
-
-      const finish = (callback) => {
-        if (finished) return;
-        finished = true;
-        if (timeoutId) clearTimeout(timeoutId);
-        delete window[callbackName];
-        script.remove();
-        callback();
-      };
-
-      window[callbackName] = (payload) => {
-        try {
-          const data = validateTowerPayload(payload);
-          finish(() => resolve(data));
-        } catch (error) {
-          lastError = error;
-          finish(() => {
-            if (attempt < 2) {
-              setTimeout(runAttempt, 500);
-            } else {
-              reject(error);
-            }
-          });
-        }
-      };
-
-      script.onerror = () => {
-        lastError = new Error('Could not load the Apps Script Web App.');
-        finish(() => {
-          if (attempt < 2) {
-            setTimeout(runAttempt, 500);
-          } else {
-            reject(new Error('Could not load the Apps Script Web App. Check the /exec URL and deployment permissions.'));
-          }
-        });
-      };
-
-      timeoutId = setTimeout(() => {
-        const timeoutError = new Error('The Apps Script API did not return data within the allowed time.');
-        lastError = timeoutError;
-        finish(() => {
-          if (attempt < 2) {
-            setTimeout(runAttempt, 500);
-          } else {
-            reject(lastError || timeoutError);
-          }
-        });
-      }, 60000);
-
-      const separator = SHEETS_API_URL.includes('?') ? '&' : '?';
-      script.src = `${SHEETS_API_URL}${separator}callback=${encodeURIComponent(callbackName)}&_=${Date.now()}`;
-      script.async = true;
-      script.referrerPolicy = 'no-referrer';
-      document.head.appendChild(script);
+    const finish = (callback) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timeout);
+      delete window[callbackName];
+      script.remove();
+      callback();
     };
 
-    runAttempt();
+    const timeout = setTimeout(() => {
+      finish(() => reject(new Error('The Apps Script API did not return data. Check that the Web App is deployed for Anyone and that the /exec URL is current.')));
+    }, 20000);
+
+    window[callbackName] = (payload) => {
+      try {
+        const data = validateTowerPayload(payload);
+        finish(() => resolve(data));
+      } catch (error) {
+        finish(() => reject(error));
+      }
+    };
+
+    script.onerror = () => {
+      finish(() => reject(new Error('Could not load the Apps Script Web App. Check the /exec URL and deployment permissions.')));
+    };
+
+    script.src = `${SHEETS_API_URL}?callback=${encodeURIComponent(callbackName)}&_=${Date.now()}`;
+    script.async = true;
+    script.referrerPolicy = 'no-referrer';
+    document.head.appendChild(script);
   });
 }
