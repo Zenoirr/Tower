@@ -51,3 +51,24 @@
   .info-steps div { border-right: 0; border-bottom: 1px solid var(--line); }
   .info-steps div:last-child { border-bottom: 0; }
 }
+
+
+@media (max-width: 1050px) {
+  .floor-summary {
+    grid-template-columns: 64px minmax(190px, 1.3fr) 1fr 86px 34px;
+    gap: 11px;
+  }
+  .summary-hp:nth-of-type(5), .summary-resists { display: none; }
+}
+
+@media (max-width: 760px) {
+  .floor-summary {
+    min-height: 76px;
+    grid-template-columns: 52px 1fr 34px;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+  .floor-number { font-size: 18px; }
+  .stage-boss strong { font-size: 14px; }
+  .stage-boss small { font-size: 12px; }
+}

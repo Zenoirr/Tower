@@ -198,3 +198,37 @@ footer strong { color: #8379e8; }
 .skeleton-list { display: grid; gap: 5px; }
 .skeleton-card { height: 70px; border: 1px solid var(--line); background: linear-gradient(100deg, #121225 30%, #191938 50%, #121225 70%); background-size: 220% 100%; opacity: 0; animation: shimmer 1.6s ease-in-out infinite, fade-in .4s ease calc(var(--i, 0) * 60ms) forwards; }
 @keyframes shimmer { 0% { background-position: 140% 0; } 100% { background-position: -40% 0; } }
+
+
+/* UX readability + long-table performance */
+:root {
+  --text: #f7f5ff;
+  --muted: #c1bdd4;
+  --muted-2: #918ca8;
+  --line: #302d52;
+  --line-strong: #514b7d;
+}
+
+.table-head {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  background: rgba(9, 9, 18, .96);
+  backdrop-filter: blur(10px);
+  font-size: 10px;
+  color: #aaa5c0;
+}
+
+.result-bar {
+  font-size: 10px;
+  color: #aaa5c0;
+}
+
+.search-wrap input {
+  font-size: 14px;
+}
+
+.search-wrap .search-icon {
+  font-size: 22px;
+  color: #c4bfd8;
+}

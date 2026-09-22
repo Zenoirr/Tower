@@ -1,0 +1,11 @@
+.update-log-card { grid-column: 1 / -1; }
+.update-log { margin-top: 18px; border-top: 1px solid var(--line); }
+.update-entry { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.update-entry:last-child { border-bottom: 0; padding-bottom: 0; }
+.update-version { align-self: start; width: fit-content; padding: 5px 8px; border: 1px solid #4d46a0; background: #201d45; color: #a39bf2; font: 700 10px 'Space Mono', monospace; letter-spacing: .5px; }
+.update-content { display: grid; gap: 5px; }
+.update-content strong { color: var(--text); font-size: 13px; line-height: 1.45; }
+.update-content span { color: var(--muted); font-size: 11px; line-height: 1.55; }
+@media (max-width: 760px) {
+  .update-entry { grid-template-columns: 1fr; gap: 9px; }
+}

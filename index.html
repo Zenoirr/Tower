@@ -9,9 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/cards.css">
-  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/cards.css?v=4">
+  <link rel="stylesheet" href="css/responsive.css?v=4">
+  <link rel="stylesheet" href="css/update-log.css?v=1">
 </head>
 <body>
   <div class="site-bg"></div>
@@ -138,6 +139,16 @@
           <section class="panel info-card"><span class="section-kicker">DATA</span><h2>Synchronized source</h2><p>Floor data is loaded from the Google Sheet through Apps Script, so sheet changes can appear on the site without editing the HTML.</p><div class="source-badge"><i></i> Google Sheets API</div></section>
           <section class="panel info-card"><span class="section-kicker">LOADOUTS</span><h2>Manual floor images</h2><p>When a floor has a loadout, its image can be added to <code>assets/loadouts/</code> and registered in <code>js/loadouts.js</code>.</p></section>
           <section class="panel info-card credits-card"><span class="section-kicker">CREDITS</span><h2>Tower of Goy</h2><p>Website, interface and implementation:</p><strong class="credit-name">Zenoir</strong><p class="muted">Data is displayed according to the synchronized source.</p></section>
+          <section class="panel info-card update-log-card">
+            <span class="section-kicker">UPDATE LOG</span>
+            <h2>Recent changes</h2>
+            <div class="update-log">
+              <article class="update-entry">
+                <div class="update-version">V1.1</div>
+                <div class="update-content"><strong>Loadouts added for Floors 177, 178, 179</strong><span>Manual loadout images are now available for these floors.</span></div>
+              </article>
+            </div>
+          </section>
         </div>
       </section>
     </main>
@@ -148,8 +159,8 @@
     </footer>
   </div>
 
-  <script src="js/loadouts.js"></script>
-  <script src="js/sheets.js"></script>
-  <script src="js/main.js"></script>
+  <script src="js/loadouts.js?v=4"></script>
+  <script src="js/sheets.js?v=4"></script>
+  <script src="js/main.js?v=4"></script>
 </body>
 </html>

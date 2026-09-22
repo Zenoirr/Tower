@@ -58,3 +58,147 @@
 .loadout-empty div:last-child { display: grid; gap: 3px; }
 .loadout-empty strong { font-size: 11px; }
 .loadout-empty span { color: var(--muted-2); font-size: 11px; }
+
+
+/* Readability and performance overrides */
+.floor-card {
+  min-height: 82px;
+  opacity: 1;
+  animation: none;
+  content-visibility: auto;
+  contain: layout paint style;
+  contain-intrinsic-size: 82px;
+}
+
+.floor-card:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: #4b4672;
+}
+
+.floor-card.open {
+  box-shadow: 0 10px 26px -20px rgba(88,79,208,.7);
+}
+
+.floor-summary {
+  min-height: 82px;
+  grid-template-columns: 78px minmax(250px, 1.5fr) 1.1fr .9fr .95fr 1.35fr 38px;
+  gap: 15px;
+  padding: 10px 18px;
+}
+
+.floor-number {
+  font-size: 21px;
+  color: #8f87ef;
+}
+
+.stage-boss {
+  gap: 4px;
+}
+
+.stage-boss strong {
+  font-size: 15px;
+  color: #f5f2ff;
+}
+
+.stage-boss small {
+  font-size: 13px;
+  color: #bdb8d0;
+}
+
+.summary-hp b {
+  font-size: 12px;
+  color: #f2efff;
+}
+
+.summary-hp small {
+  font-size: 10px;
+  color: #918ca8;
+}
+
+.summary-resists {
+  gap: 11px;
+}
+
+.resistance-item {
+  gap: 7px;
+  font-size: 12px;
+  color: #d4d0e2;
+}
+
+.data-icon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.modifier-pill {
+  gap: 8px;
+  color: #eeeaf8;
+  font-size: 13px;
+}
+
+.modifier-icon {
+  width: 28px;
+  height: 28px;
+  flex-basis: 28px;
+}
+
+.muted-value {
+  color: #8f8aa2;
+  font-size: 12px;
+}
+
+.expand-icon {
+  width: 30px;
+  height: 30px;
+  font-size: 19px;
+}
+
+.info-panel {
+  padding: 22px;
+}
+
+.panel-title strong {
+  font-size: 13px;
+}
+
+.boss-name {
+  font-size: 24px;
+}
+
+.hp-row {
+  font-size: 13px;
+}
+
+.hp-row b {
+  font-size: 11px;
+}
+
+.resistance-list .resistance-item,
+.affinity-item {
+  padding: 10px 11px;
+}
+
+.affinity-item {
+  grid-template-columns: 26px 1fr auto;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.affinity-item .data-icon {
+  width: 25px;
+  height: 25px;
+}
+
+.affinity-item b {
+  font-size: 11px;
+  color: #f3efff;
+}
+
+.floor-details-host:empty {
+  display: none;
+}

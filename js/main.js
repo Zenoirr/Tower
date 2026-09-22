@@ -68,7 +68,7 @@ function iconHTML(type, name, className = '') {
   const clean = String(name ?? '').trim();
   const icon = getIcon(type, clean);
   if (!icon) return '';
-  return `<span class="icon-mask ${className}" aria-label="${escapeHTML(clean)}" role="img" style="--icon-url:url('${icon}');--icon-color:${getIconColor(clean)}"></span>`;
+  return `<img class="data-icon ${className}" src="${escapeHTML(icon)}" alt="${escapeHTML(clean)}" loading="lazy" decoding="async">`;
 }
 
 function modifierHTML(modifier) {
@@ -129,27 +129,33 @@ function loadoutHTML(floor) {
   return `<div class="loadout-card"><div class="loadout-image-wrap"><img src="${escapeHTML(loadout.image)}" alt="Loadout for Floor ${floor.floor}" loading="lazy"></div><div class="loadout-copy"><span class="section-label">LOADOUT</span><strong>${escapeHTML(loadout.title || 'Recommended loadout')}</strong>${loadout.note ? `<p>${escapeHTML(loadout.note)}</p>` : ''}</div></div>`;
 }
 
-function floorCard(floor, index = 0) {
+function floorSummary(floor) {
   const modifier = cleanModifier(floor.modifier);
-  const affinities = normalizeAffinityList(floor.affinities);
-
-  return `<article class="floor-card ${modifier ? 'has-modifier' : ''}" data-floor="${escapeHTML(floor.floor)}" style="--i:${Math.min(index, 24)}">
-    <button class="floor-summary" type="button" aria-expanded="false">
+  return `<button class="floor-summary" type="button" aria-expanded="false">
       <span class="floor-number">${String(floor.floor).padStart(2, '0')}</span>
       <span class="stage-boss"><strong>${escapeHTML(displayValue(floor.stage))}</strong><small>${escapeHTML(displayValue(floor.boss))}</small></span>
       <span class="summary-modifier">${modifierHTML(modifier)}</span>
       <span class="summary-hp"><b>${escapeHTML(displayValue(floor.bossHP?.actual || floor.bossHP?.base))}</b><small>Boss HP</small></span>
       <span class="summary-hp"><b>${escapeHTML(displayValue(floor.enemyHP))}</b><small>Enemy HP</small></span>
       <span class="summary-resists">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</span>
-      <span class="expand-icon">+</span>
-    </button>
-    <div class="floor-details"><div class="details-inner"><div class="details-grid">
+      <span class="expand-icon" aria-hidden="true">+</span>
+    </button>`;
+}
+
+function floorDetails(floor) {
+  const modifier = cleanModifier(floor.modifier);
+  const affinities = normalizeAffinityList(floor.affinities);
+  return `<div class="floor-details"><div class="details-inner"><div class="details-grid">
       <section class="info-panel"><div class="panel-title"><span>01</span><strong>Boss</strong></div><div class="boss-name">${escapeHTML(displayValue(floor.boss))}</div><div class="modifier-line"><span class="label">Modifier</span>${modifierHTML(modifier)}</div></section>
       <section class="info-panel"><div class="panel-title"><span>02</span><strong>HP</strong></div><div class="hp-row"><span>Base HP</span><b>${escapeHTML(displayValue(floor.bossHP?.base))}</b></div><div class="hp-row"><span>Actual HP</span><b>${escapeHTML(displayValue(floor.bossHP?.actual))}</b></div><div class="hp-row"><span>Enemy Wave 1</span><b>${escapeHTML(displayValue(floor.enemyHP))}</b></div></section>
       <section class="info-panel"><div class="panel-title"><span>03</span><strong>Resistances</strong></div><div class="resistance-list">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</div></section>
       <section class="info-panel affinity-panel"><div class="panel-title"><span>04</span><strong>Affinities</strong></div><div class="affinity-list">${affinities.length ? affinities.map(affinityHTML).join('') : '<span class="muted-value">No affinities listed.</span>'}</div></section>
-    </div><div class="loadout-section">${loadoutHTML(floor)}</div></div></div>
-  </article>`;
+    </div><div class="loadout-section">${loadoutHTML(floor)}</div></div></div>`;
+}
+
+function floorCard(floor) {
+  const modifier = cleanModifier(floor.modifier);
+  return `<article class="floor-card ${modifier ? 'has-modifier' : ''}" data-floor="${escapeHTML(floor.floor)}">${floorSummary(floor)}<div class="floor-details-host"></div></article>`;
 }
 
 function matchesSearch(floor, query) {
@@ -186,7 +192,7 @@ function render() {
     sortAscending ? Number(a.floor) - Number(b.floor) : Number(b.floor) - Number(a.floor)
   );
 
-  listEl.innerHTML = ordered.map((floor, index) => floorCard(floor, index)).join('');
+  listEl.innerHTML = ordered.map(floorCard).join('');
   emptyEl.classList.toggle('hidden', ordered.length !== 0);
   resultCountEl.textContent = `${ordered.length} of ${floors.length} floors`;
   clearSearchEl.classList.toggle('hidden', !query);
@@ -195,6 +201,14 @@ function render() {
     const card = button.closest('.floor-card');
     const open = card.classList.toggle('open');
     button.setAttribute('aria-expanded', String(open));
+    const host = card.querySelector('.floor-details-host');
+    if (open && host && !host.dataset.rendered) {
+      const floor = floors.find(item => String(item.floor) === card.dataset.floor);
+      if (floor) {
+        host.innerHTML = floorDetails(floor);
+        host.dataset.rendered = 'true';
+      }
+    }
   }));
 }
 
@@ -252,7 +266,7 @@ async function init() {
     setStatus('', 'Syncing');
     floors = await fetchTowerData();
     floors.sort((a, b) => Number(a.floor) - Number(b.floor));
-    animateCount(countEl, floors.length);
+    countEl.textContent = floors.length;
     updateHomeStatsAnimated();
     populateStageFilter();
     setStatus('online', 'Synchronized');
@@ -270,7 +284,11 @@ async function init() {
   }
 }
 
-searchEl?.addEventListener('input', render);
+let searchTimer = null;
+searchEl?.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(render, 70);
+});
 clearSearchEl?.addEventListener('click', () => { searchEl.value = ''; render(); searchEl.focus(); });
 stageFilterEl?.addEventListener('change', () => { activeStage = stageFilterEl.value; render(); });
 $('#sortButton')?.addEventListener('click', () => {

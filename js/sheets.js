@@ -63,16 +63,8 @@ function cleanModifier(value) {
   return EMPTY_VALUES.has(modifier.toLowerCase()) ? '' : modifier;
 }
 
-async function fetchTowerData() {
-  try {
-    const response = await fetch(SHEETS_API_URL, { cache: 'no-store', redirect: 'follow' });
-    if (!response.ok) throw new Error(`API returned HTTP ${response.status}`);
-    const payload = await response.json();
-    return validateTowerPayload(payload);
-  } catch (error) {
-    console.warn('Direct API request failed. Trying JSONP fallback.', error);
-    return fetchTowerDataJSONP();
-  }
+function fetchTowerData() {
+  return fetchTowerDataJSONP();
 }
 
 function validateTowerPayload(payload) {
@@ -85,35 +77,37 @@ function fetchTowerDataJSONP() {
   return new Promise((resolve, reject) => {
     const callbackName = `towerGoyCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const script = document.createElement('script');
-    const timeout = setTimeout(() => {
-      cleanup();
-      reject(new Error('The database request was blocked. Enable JSONP in the Apps Script deployment.'));
-    }, 12000);
+    let finished = false;
 
-    function cleanup() {
+    const finish = (callback) => {
+      if (finished) return;
+      finished = true;
       clearTimeout(timeout);
       delete window[callbackName];
       script.remove();
-    }
+      callback();
+    };
+
+    const timeout = setTimeout(() => {
+      finish(() => reject(new Error('The Apps Script API did not return data. Check that the Web App is deployed for Anyone and that the /exec URL is current.')));
+    }, 20000);
 
     window[callbackName] = (payload) => {
       try {
         const data = validateTowerPayload(payload);
-        cleanup();
-        resolve(data);
+        finish(() => resolve(data));
       } catch (error) {
-        cleanup();
-        reject(error);
+        finish(() => reject(error));
       }
     };
 
     script.onerror = () => {
-      cleanup();
-      reject(new Error('The database could not be reached. Check the Apps Script web app permissions.'));
+      finish(() => reject(new Error('Could not load the Apps Script Web App. Check the /exec URL and deployment permissions.')));
     };
 
     script.src = `${SHEETS_API_URL}?callback=${encodeURIComponent(callbackName)}&_=${Date.now()}`;
     script.async = true;
+    script.referrerPolicy = 'no-referrer';
     document.head.appendChild(script);
   });
 }
