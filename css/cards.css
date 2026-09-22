@@ -265,3 +265,40 @@
 .loadout-copy { gap: 8px; }
 .loadout-image-wrap { min-height: 360px; height: 460px; padding: 16px; }
 .loadout-image-wrap img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
+
+/* Exact icon colors + data emphasis */
+.icon-image {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  display: inline-block;
+  background-color: var(--icon-color, #a8b2c2);
+  -webkit-mask-image: var(--icon-url);
+  mask-image: var(--icon-url);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  vertical-align: middle;
+}
+.icon-image.modifier-icon { width: 28px; height: 28px; flex-basis: 28px; }
+.summary-affinity .icon-image { width: 24px; height: 24px; flex-basis: 24px; }
+.affinity-item .icon-image { width: 28px; height: 28px; flex-basis: 28px; }
+
+.modifier-pill { color: var(--modifier-color, #eeeaf8); }
+.modifier-pill .modifier-icon { background-color: var(--modifier-color, #a8b2c2); }
+.resistance-item > span:last-child { color: var(--data-color, #d4d0e2); font-weight: 700; }
+.affinity-item > span:not(.icon-image) { color: var(--data-color, #ddd9ef); font-weight: 700; }
+.affinity-item b { color: var(--data-color, #f4f1ff); }
+
+.summary-boss-hp b, .hp-row-boss b { color: #ff4b57; }
+.summary-enemy-hp b, .hp-row-enemy b { color: #72d69a; }
+.modifier-extra {
+  color: var(--modifier-extra-color) !important;
+  font-weight: 800;
+}
+
+/* Keep the actual source icon shape crisp even when the site applies its exact data color. */
+.icon-image { -webkit-mask-mode: alpha; mask-mode: alpha; }

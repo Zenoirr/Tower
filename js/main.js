@@ -70,20 +70,80 @@ function iconHTML(type, name, className = '') {
   if (!icon) return '';
 
   const color = getIconColor(clean);
-  return `<img class="icon-image ${className}" src="${escapeHTML(icon)}" alt="" aria-hidden="true" style="--icon-color:${escapeHTML(color)}">`;
+  const safeIcon = escapeHTML(icon);
+  const safeColor = escapeHTML(color);
+  return `<span class="icon-image ${className}" aria-hidden="true" style="--icon-color:${safeColor};--icon-url:url('${safeIcon}')"></span>`;
+}
+
+const MODIFIER_COLORS = {
+  Summoner: '#B52BFF',
+  Sword: '#00CFFF',
+  Greed: '#E8E8E8',
+  Tartaros: '#7CFF00'
+};
+
+function colorExtraValue(text, modifier = '') {
+  const clean = displayValue(text);
+  if (clean === '---') return clean;
+
+  const modifierName = cleanModifier(modifier);
+  const color = MODIFIER_COLORS[modifierName];
+  if (!color) return escapeHTML(clean);
+
+  if (modifierName === 'Summoner') {
+    return escapeHTML(clean).replace(/(\([^)]*\))/g, `<span class="modifier-extra" style="--modifier-extra-color:${color}">$1</span>`);
+  }
+
+  if (modifierName === 'Sword') {
+    return escapeHTML(clean).replace(/(\d+(?:\.\d+)?x?\s*(?:revives?|revs?))/gi, `<span class="modifier-extra" style="--modifier-extra-color:${color}">$1</span>`);
+  }
+
+  if (modifierName === 'Greed') {
+    return escapeHTML(clean).replace(/(\+?\d+(?:\.\d+)?%)/g, `<span class="modifier-extra" style="--modifier-extra-color:${color}">$1</span>`);
+  }
+
+  if (modifierName === 'Tartaros') {
+    return escapeHTML(clean).replace(/(\+?\d+(?:\.\d+)?[KMB]?\/\s*10s)/gi, `<span class="modifier-extra" style="--modifier-extra-color:${color}">$1</span>`);
+  }
+
+  return escapeHTML(clean);
+}
+
+function hpHTML(value, modifier = '') {
+  const clean = displayValue(value);
+  if (clean === '---') return '<span class="muted-value">---</span>';
+
+  const escaped = escapeHTML(clean);
+  const modifierName = cleanModifier(modifier);
+  if (modifierName === 'Summoner') {
+    return escaped.replace(/(\([^)]*\))/g, `<span class="modifier-extra" style="--modifier-extra-color:${MODIFIER_COLORS.Summoner}">$1</span>`);
+  }
+  if (modifierName === 'Greed') {
+    return escaped.replace(/(\+?\d+(?:\.\d+)?%)/g, `<span class="modifier-extra" style="--modifier-extra-color:${MODIFIER_COLORS.Greed}">$1</span>`);
+  }
+  if (modifierName === 'Tartaros') {
+    return escaped.replace(/(\+?\d+(?:\.\d+)?[KMB]?\/\s*10s)/gi, `<span class="modifier-extra" style="--modifier-extra-color:${MODIFIER_COLORS.Tartaros}">$1</span>`);
+  }
+  if (modifierName === 'Sword') {
+    return escaped.replace(/(\d+(?:\.\d+)?x?\s*(?:revives?|revs?))/gi, `<span class="modifier-extra" style="--modifier-extra-color:${MODIFIER_COLORS.Sword}">$1</span>`);
+  }
+  return escaped;
 }
 
 function modifierHTML(modifier) {
   const value = cleanModifier(modifier);
   if (!value) return '<span class="muted-value">---</span>';
   const icon = getIcon('modifiers', value);
-  return `<span class="modifier-pill">${icon ? iconHTML('modifiers', value, 'modifier-icon') : '<span class="modifier-fallback">M</span>'}<span>${escapeHTML(value)}</span></span>`;
+  const color = getIconColor(value);
+  const label = colorExtraValue(value, value);
+  return `<span class="modifier-pill" style="--modifier-color:${escapeHTML(color)}">${icon ? iconHTML('modifiers', value, 'modifier-icon') : '<span class="modifier-fallback">M</span>'}<span>${label}</span></span>`;
 }
 
 function resistanceHTML(type, value) {
   const clean = displayValue(value);
   if (clean === '---') return '<span class="muted-value">---</span>';
-  return `<span class="resistance-item">${iconHTML('archetypes', type)}<span>${escapeHTML(clean)}</span></span>`;
+  const color = getIconColor(type);
+  return `<span class="resistance-item" style="--data-color:${escapeHTML(color)}">${iconHTML('archetypes', type)}<span>${escapeHTML(clean)}</span></span>`;
 }
 
 const ELEMENT_NAMES = new Set(['Hydro', 'Gale', 'Terra', 'Flame', 'Storm', 'Light', 'Dark']);
@@ -120,7 +180,8 @@ function normalizeAffinityList(list) {
 function affinityHTML(item) {
   const element = displayValue(item.element);
   const value = displayValue(item.value);
-  return `<span class="affinity-item">${iconHTML('elements', element)}<span>${escapeHTML(element)}</span><b>${escapeHTML(value)}</b></span>`;
+  const color = getIconColor(element);
+  return `<span class="affinity-item" style="--data-color:${escapeHTML(color)}">${iconHTML('elements', element)}<span>${escapeHTML(element)}</span><b>${escapeHTML(value)}</b></span>`;
 }
 
 function loadoutHTML(floor) {
@@ -159,8 +220,8 @@ function floorSummary(floor) {
       <span class="floor-number">${String(floor.floor).padStart(2, '0')}</span>
       <span class="stage-boss"><strong>${escapeHTML(displayValue(floor.stage))}</strong><small>${escapeHTML(displayValue(floor.boss))}</small></span>
       <span class="summary-modifier">${modifierHTML(modifier)}</span>
-      <span class="summary-hp"><b>${escapeHTML(displayValue(floor.bossHP?.actual || floor.bossHP?.base))}</b><small>Boss HP</small></span>
-      <span class="summary-hp"><b>${escapeHTML(displayValue(floor.enemyHP))}</b><small>Enemy HP</small></span>
+      <span class="summary-hp summary-boss-hp"><b>${hpHTML(floor.bossHP?.actual || floor.bossHP?.base, modifier)}</b><small>Boss HP</small></span>
+      <span class="summary-hp summary-enemy-hp"><b>${escapeHTML(displayValue(floor.enemyHP))}</b><small>Enemy HP</small></span>
       <span class="summary-resists">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</span>
       <span class="summary-affinities">${summaryAffinities}</span>
       <span class="expand-icon" aria-hidden="true">+</span>
@@ -172,7 +233,7 @@ function floorDetails(floor) {
   const affinities = normalizeAffinityList(floor.affinities);
   return `<div class="floor-details"><div class="details-inner"><div class="details-grid">
       <section class="info-panel"><div class="panel-title"><span>01</span><strong>Boss</strong></div><div class="boss-name">${escapeHTML(displayValue(floor.boss))}</div><div class="modifier-line"><span class="label">Modifier</span>${modifierHTML(modifier)}</div></section>
-      <section class="info-panel"><div class="panel-title"><span>02</span><strong>HP</strong></div><div class="hp-row"><span>Base HP</span><b>${escapeHTML(displayValue(floor.bossHP?.base))}</b></div><div class="hp-row"><span>Actual HP</span><b>${escapeHTML(displayValue(floor.bossHP?.actual))}</b></div><div class="hp-row"><span>Enemy Wave 1</span><b>${escapeHTML(displayValue(floor.enemyHP))}</b></div></section>
+      <section class="info-panel"><div class="panel-title"><span>02</span><strong>HP</strong></div><div class="hp-row hp-row-boss"><span>Base HP</span><b>${hpHTML(floor.bossHP?.base, modifier)}</b></div><div class="hp-row hp-row-boss"><span>Actual HP</span><b>${hpHTML(floor.bossHP?.actual, modifier)}</b></div><div class="hp-row hp-row-enemy"><span>Enemy Wave 1</span><b>${escapeHTML(displayValue(floor.enemyHP))}</b></div></section>
       <section class="info-panel"><div class="panel-title"><span>03</span><strong>Resistances</strong></div><div class="resistance-list">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</div></section>
       <section class="info-panel affinity-panel"><div class="panel-title"><span>04</span><strong>Affinities</strong></div><div class="affinity-list">${affinities.length ? affinities.map(affinityHTML).join('') : '<span class="muted-value">No affinities listed.</span>'}</div></section>
     </div><div class="loadout-section">${loadoutHTML(floor)}</div></div></div>`;
@@ -348,6 +409,31 @@ async function init() {
   }
 }
 
+const UPDATE_LOG_VERSION = '1.2';
+
+function closeUpdateLog() {
+  $('#updateModal')?.classList.add('hidden');
+  try { localStorage.setItem(`towerOfGoyUpdateSeen:${UPDATE_LOG_VERSION}`, '1'); } catch (_) {}
+}
+
+function openUpdateLog() {
+  $('#updateModal')?.classList.remove('hidden');
+}
+
+function setupUpdateLog() {
+  $('#updateLogButton')?.addEventListener('click', openUpdateLog);
+  $('#updateOk')?.addEventListener('click', closeUpdateLog);
+  $('#updateClose')?.addEventListener('click', closeUpdateLog);
+  $('.update-backdrop')?.addEventListener('click', closeUpdateLog);
+  window.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !$('#updateModal')?.classList.contains('hidden')) closeUpdateLog();
+  });
+
+  let seen = false;
+  try { seen = localStorage.getItem(`towerOfGoyUpdateSeen:${UPDATE_LOG_VERSION}`) === '1'; } catch (_) {}
+  if (!seen) setTimeout(openUpdateLog, 350);
+}
+
 let searchTimer = null;
 searchEl?.addEventListener('input', () => {
   clearTimeout(searchTimer);
@@ -420,5 +506,6 @@ window.addEventListener('keydown', event => {
   }
 });
 
+setupUpdateLog();
 handleRoute();
 init();

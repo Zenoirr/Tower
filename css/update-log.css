@@ -1,24 +1,76 @@
 .update-log-button {
-  border: 1px solid #5b51c9;
-  background: #292260;
-  color: #fff;
-  padding: 10px 15px;
-  border-radius: 8px;
-  font-size: 14px;
+  margin-left: auto;
+  border: 1px solid var(--line-strong);
+  background: #15152a;
+  color: #c9c4e0;
+  padding: 9px 13px;
+  border-radius: 7px;
+  font-size: 12px;
   font-weight: 800;
-  box-shadow: 0 6px 20px -14px rgba(88,79,208,.9);
+  letter-spacing: .2px;
+  cursor: pointer;
 }
-.update-log-button:hover { background: #383078; border-color: #766be6; transform: translateY(-1px); }
-.update-modal { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; }
-.update-backdrop { position: absolute; inset: 0; background: rgba(4,4,12,.78); backdrop-filter: blur(5px); }
-.update-dialog { position: relative; width: min(460px, 100%); padding: 30px; border: 1px solid #5149a7; border-radius: 14px; background: #111020; box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(117,107,234,.12); }
+.update-log-button:hover {
+  background: #292260;
+  border-color: #6b61cf;
+  color: #fff;
+}
+.update-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.update-modal.hidden { display: none; }
+.update-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4,4,12,.78);
+  backdrop-filter: blur(5px);
+}
+.update-dialog {
+  position: relative;
+  width: min(480px, 100%);
+  padding: 30px;
+  border: 1px solid #5149a7;
+  border-radius: 14px;
+  background: #111020;
+  box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(117,107,234,.12);
+}
 .update-dialog h2 { margin-top: 9px; font-size: 28px; letter-spacing: -.7px; }
-.update-dialog p { margin-top: 10px; color: var(--muted); font-size: 16px; line-height: 1.6; }
-.update-close { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; border: 1px solid var(--line-strong); background: #19182f; color: #fff; border-radius: 8px; font-size: 25px; line-height: 1; }
+.update-dialog p { margin-top: 10px; color: var(--muted); font-size: 15px; line-height: 1.65; }
+.update-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line-strong);
+  background: #19182f;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+}
 .update-close:hover { background: #2b274e; border-color: #7168df; }
-.update-ok { width: 100%; margin-top: 24px; min-height: 48px; border: 1px solid #6a60d8; border-radius: 8px; background: #4c43b9; color: #fff; font-size: 15px; font-weight: 800; }
+.update-ok {
+  width: 100%;
+  margin-top: 24px;
+  min-height: 48px;
+  border: 1px solid #6a60d8;
+  border-radius: 8px;
+  background: #4c43b9;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
 .update-ok:hover { background: #5a50cf; }
+
 @media (max-width: 760px) {
-  .update-log-button { padding: 9px 12px; font-size: 13px; }
+  .update-log-button { padding: 9px 10px; font-size: 11px; }
   .update-dialog { padding: 27px 22px 22px; }
 }
