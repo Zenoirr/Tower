@@ -194,33 +194,32 @@
   display: none;
 }
 
-/* Clean icon system: one element, one mask, no duplicate image/mask layers. */
-.icon-mask {
+/* Single icon renderer: use the original PNG once, without mask/pseudo-element layers. */
+.icon-image {
   width: 24px;
   height: 24px;
   flex: 0 0 24px;
   display: inline-block;
-  background-color: var(--icon-color, #a8b2c2);
-  -webkit-mask: var(--icon-url) center / contain no-repeat;
-  mask: var(--icon-url) center / contain no-repeat;
+  object-fit: contain;
+  object-position: center;
   vertical-align: middle;
   position: relative;
+  border: 0;
+  outline: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
 }
-.icon-mask::before,
-.icon-mask::after {
-  content: none !important;
-  display: none !important;
-}
-.icon-mask.modifier-icon { width: 28px; height: 28px; flex-basis: 28px; }
-.summary-affinity .icon-mask { width: 24px; height: 24px; flex-basis: 24px; }
-.affinity-item .icon-mask { width: 28px; height: 28px; flex-basis: 28px; }
+.icon-image.modifier-icon { width: 28px; height: 28px; flex-basis: 28px; }
+.summary-affinity .icon-image { width: 24px; height: 24px; flex-basis: 24px; }
+.affinity-item .icon-image { width: 28px; height: 28px; flex-basis: 28px; }
 
 .summary-boss-hp b, .hp-row-boss b { color: #ff4b57; }
 .summary-enemy-hp b, .hp-row-enemy b { color: #72d69a; }
 .modifier-extra { color: var(--modifier-extra-color) !important; font-weight: 800; }
 .modifier-pill { color: var(--modifier-color, #eeeaf8); }
-.resistance-item > span:not(.icon-mask) { color: var(--data-color, #d4d0e2); font-weight: 700; }
-.affinity-item > span:not(.icon-mask) { color: var(--data-color, #ddd9ef); font-weight: 800; }
+.resistance-item > span:not(.icon-image) { color: var(--data-color, #d4d0e2); font-weight: 700; }
+.affinity-item > span:not(.icon-image) { color: var(--data-color, #ddd9ef); font-weight: 800; }
 .affinity-item b { color: var(--data-color, #f4f1ff); font-weight: 800; }
 .resistance-item .resistance-name { color: var(--data-color, #d4d0e2); font-weight: 800; }
 .resistance-item .resistance-value { color: var(--data-color, #f4f1ff); font: 800 12px 'Manrope', sans-serif; margin-left: 2px; }
@@ -229,7 +228,7 @@
   gap: 5px;
   font-size: 11px;
 }
-.summary-resists .resistance-item .icon-mask {
+.summary-resists .resistance-item .icon-image {
   width: 20px;
   height: 20px;
   flex-basis: 20px;
@@ -255,7 +254,7 @@
 }
 .summary-affinity .affinity-name { color: var(--data-color, #ddd9ef); font-weight: 800; }
 .summary-affinity .affinity-value { color: var(--data-color, #f4f1ff); font: 800 12px 'Manrope', sans-serif; }
-.summary-affinity .icon-mask { width: 24px; height: 24px; flex-basis: 24px; }
+.summary-affinity .icon-image { width: 24px; height: 24px; flex-basis: 24px; }
 
 .loadout-section {
   padding: 16px 0 0;

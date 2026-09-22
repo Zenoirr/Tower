@@ -73,8 +73,7 @@ function iconHTML(type, name, className = '') {
   const icon = getIcon(type, clean);
   if (!icon) return '';
 
-  const color = getIconColor(clean);
-  return `<span class="icon-mask ${className}" aria-hidden="true" style="--icon-color:${escapeHTML(color)};--icon-url:url('${escapeHTML(icon)}')"></span>`;
+  return `<img class="icon-image ${className}" src="${escapeHTML(icon)}" alt="" aria-hidden="true" draggable="false">`;
 }
 
 const MODIFIER_COLORS = {

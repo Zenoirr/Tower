@@ -38,7 +38,7 @@
   .stage-boss strong { font-size: 14px; }
   .stage-boss small { font-size: 12px; }
   .summary-affinity { font-size: 11px; }
-  .summary-affinity .icon-mask { width: 20px; height: 20px; flex-basis: 20px; }
+  .summary-affinity .icon-image { width: 20px; height: 20px; flex-basis: 20px; }
   .details-grid { grid-template-columns: 1fr; }
   .info-panel { min-height: auto; }
   .loadout-card { grid-template-columns: 1fr; }
@@ -87,7 +87,7 @@
     min-width: 170px;
   }
   .summary-affinity { font-size: 11px; }
-  .summary-affinity .icon-mask { width: 21px; height: 21px; flex-basis: 21px; }
+  .summary-affinity .icon-image { width: 21px; height: 21px; flex-basis: 21px; }
   .loadout-tabs { margin-bottom: 10px; }
 }
 
