@@ -37,7 +37,7 @@
   .floor-number { font-size: 18px; }
   .stage-boss strong { font-size: 14px; }
   .stage-boss small { font-size: 12px; }
-  .summary-affinity { font-size: 10px; }
+  .summary-affinity { font-size: 11px; }
   .summary-affinity .icon-mask { width: 20px; height: 20px; flex-basis: 20px; }
   .details-grid { grid-template-columns: 1fr; }
   .info-panel { min-height: auto; }
@@ -61,7 +61,7 @@
   .info-steps div { border-right: 0; border-bottom: 1px solid var(--line); }
   .info-steps div:last-child { border-bottom: 0; }
   .floor-summary { grid-template-columns: 46px minmax(0, 1fr) 96px 30px; gap: 7px; padding: 9px; }
-  .summary-affinity span:not(.icon-mask), .summary-affinity b { font-size: 9px; }
+  .summary-affinity .affinity-name, .summary-affinity .affinity-value { font-size: 10px; }
 }
 
 
@@ -87,7 +87,7 @@
     min-width: 170px;
   }
   .summary-affinity { font-size: 11px; }
-  .summary-affinity .icon-image { width: 21px; height: 21px; flex-basis: 21px; }
+  .summary-affinity .icon-mask { width: 21px; height: 21px; flex-basis: 21px; }
   .loadout-tabs { margin-bottom: 10px; }
 }
 

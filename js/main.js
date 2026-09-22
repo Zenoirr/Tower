@@ -145,7 +145,7 @@ function resistanceHTML(type, value) {
   const clean = displayValue(value);
   if (clean === '---') return '<span class="muted-value">---</span>';
   const color = getIconColor(type);
-  return `<span class="resistance-item" style="--data-color:${escapeHTML(color)}">${iconHTML('archetypes', type)}<span>${escapeHTML(clean)}</span></span>`;
+  return `<span class="resistance-item" style="--data-color:${escapeHTML(color)}">${iconHTML('archetypes', type)}<span class="resistance-name">${escapeHTML(type)}</span><b class="resistance-value">${escapeHTML(clean)}</b></span>`;
 }
 
 const ELEMENT_NAMES = new Set(['Hydro', 'Gale', 'Terra', 'Flame', 'Storm', 'Light', 'Dark']);
@@ -183,7 +183,7 @@ function affinityHTML(item) {
   const element = displayValue(item.element);
   const value = displayValue(item.value);
   const color = getIconColor(element);
-  return `<span class="affinity-item" style="--data-color:${escapeHTML(color)}">${iconHTML('elements', element)}<span>${escapeHTML(element)}</span><b>${escapeHTML(value)}</b></span>`;
+  return `<span class="affinity-item" style="--data-color:${escapeHTML(color)}">${iconHTML('elements', element)}<span class="affinity-name">${escapeHTML(element)}</span><b class="affinity-value">${escapeHTML(value)}</b></span>`;
 }
 
 function loadoutHTML(floor) {
@@ -215,7 +215,7 @@ function floorSummary(floor) {
   const modifier = cleanModifier(floor.modifier);
   const affinities = normalizeAffinityList(floor.affinities);
   const summaryAffinities = affinities.length
-    ? affinities.map(item => `<span class="summary-affinity">${iconHTML('elements', item.element)}<span>${escapeHTML(item.element)}</span><b>${escapeHTML(item.value)}</b></span>`).join('')
+    ? affinities.map(item => `<span class="summary-affinity" style="--data-color:${escapeHTML(getIconColor(item.element))}">${iconHTML('elements', item.element)}<span class="affinity-name">${escapeHTML(item.element)}</span><b class="affinity-value">${escapeHTML(item.value)}</b></span>`).join('')
     : '<span class="muted-value">---</span>';
 
   return `<button class="floor-summary" type="button" aria-expanded="false">
