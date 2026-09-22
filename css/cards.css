@@ -310,3 +310,89 @@
 .affinity-item .icon-image {
   justify-self: center;
 }
+
+
+/* =========================================================
+   TOWER V4 — CARD READABILITY
+   Visual-only sizing overrides. API/data logic untouched.
+   ========================================================= */
+
+.stage-boss strong { font-size: 21px; }
+.stage-boss small { font-size: 18px; }
+
+.summary-hp b { font-size: 15px; }
+.summary-hp small { font-size: 15px; }
+
+.resistance-item {
+  gap: 8px;
+  font-size: 17px;
+}
+
+.modifier-pill {
+  gap: 9px;
+  font-size: 18px;
+}
+
+.modifier-icon {
+  width: 33px;
+  height: 33px;
+  flex-basis: 33px;
+}
+
+.modifier-fallback {
+  width: 33px;
+  height: 33px;
+  font-size: 12px;
+}
+
+.muted-value { font-size: 18px; }
+
+.summary-affinity {
+  font-size: 16px;
+  gap: 8px;
+}
+
+.summary-affinity .icon-image {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+}
+
+.summary-affinity b {
+  font-size: 15px;
+}
+
+.resistance-list .resistance-item,
+.affinity-item {
+  font-size: 19px;
+}
+
+.resistance-list .resistance-item .icon-image,
+.affinity-item .icon-image {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+}
+
+.affinity-item {
+  column-gap: 18px;
+}
+
+.affinity-item b {
+  font-size: 15px;
+}
+
+.boss-name { font-size: 33px; }
+
+.label { font-size: 16px; }
+
+.hp-row {
+  font-size: 18px;
+}
+
+.panel-title strong { font-size: 18px; }
+
+.loadout-copy strong { font-size: 27px; }
+.loadout-copy p { font-size: 18px; }
+.loadout-empty strong { font-size: 16px; }
+.loadout-empty span { font-size: 16px; }
