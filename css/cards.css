@@ -15,7 +15,7 @@
 .resistance-item { display: inline-flex; align-items: center; gap: 5px; font: 700 11px 'Space Mono', monospace; color: #c4bfd7; white-space: nowrap; }
 .modifier-pill { min-width: 0; display: inline-flex; align-items: center; gap: 6px; color: #ddd9ef; font-size: 12px; font-weight: 700; }
 .modifier-icon { width: 22px; height: 22px; flex-basis: 22px; }
-.modifier-fallback { width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid var(--line-strong); color: var(--muted); font: 800 10px 'Manrope', sans-serif; line-height: 1; }
+.modifier-fallback { width: 22px; height: 22px; display: grid; place-items: center; border: 1px solid var(--line-strong); color: var(--muted); font: 700 8px 'Space Mono', monospace; }
 .muted-value { color: var(--muted-2); font-size: 12px; }
 .expand-icon { width: 27px; height: 27px; border: 1px solid var(--line); display: grid; place-items: center; color: var(--muted); font-size: 17px; transition: transform .3s cubic-bezier(.34,1.56,.64,1), color .2s, border-color .2s, background-color .2s; }
 .floor-card.open .expand-icon { transform: rotate(45deg); color: #fff; border-color: #5149a7; background: #211d4c; }
@@ -106,12 +106,12 @@
 }
 
 .summary-hp b {
-  font-size: 13px;
+  font-size: 12px;
   color: #f2efff;
 }
 
 .summary-hp small {
-  font-size: 11px;
+  font-size: 10px;
   color: #918ca8;
 }
 
@@ -120,19 +120,24 @@
 }
 
 .resistance-item {
-  gap: 8px;
-  font-family: 'Manrope', sans-serif;
+  gap: 7px;
   font-size: 12px;
   color: #d4d0e2;
-  line-height: 1.25;
+}
+
+.data-icon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  object-fit: contain;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .modifier-pill {
-  gap: 9px;
+  gap: 8px;
   color: #eeeaf8;
-  font-family: 'Manrope', sans-serif;
   font-size: 13px;
-  font-weight: 800;
 }
 
 .modifier-icon {
@@ -178,38 +183,27 @@
 }
 
 .affinity-item {
-  grid-template-columns: 28px minmax(0, 1fr) auto;
-  gap: 9px;
-  font-family: 'Manrope', sans-serif;
+  grid-template-columns: 26px 1fr auto;
+  gap: 8px;
   font-size: 13px;
-  line-height: 1.25;
+}
+
+.affinity-item .data-icon {
+  width: 25px;
+  height: 25px;
 }
 
 .affinity-item b {
-  font-size: 12px;
-  color: var(--data-color, #f3efff);
+  font-size: 11px;
+  color: #f3efff;
 }
 
 .floor-details-host:empty {
   display: none;
 }
 
-/* Single icon renderer: use the original PNG once, without mask/pseudo-element layers. */
-.icon-image {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
-  display: inline-block;
-  object-fit: contain;
-  object-position: center;
-  vertical-align: middle;
-  position: relative;
-  border: 0;
-  outline: 0;
-  background: transparent !important;
-  box-shadow: none !important;
-  filter: none !important;
-}
+/* Local PNG icon system: one image element per icon, no masks or pseudo-elements. */
+.icon-image { width: 24px; height: 24px; flex: 0 0 24px; display: inline-block; object-fit: contain; vertical-align: middle; filter: none; }
 .icon-image.modifier-icon { width: 28px; height: 28px; flex-basis: 28px; }
 .summary-affinity .icon-image { width: 24px; height: 24px; flex-basis: 24px; }
 .affinity-item .icon-image { width: 28px; height: 28px; flex-basis: 28px; }
@@ -219,42 +213,8 @@
 .modifier-extra { color: var(--modifier-extra-color) !important; font-weight: 800; }
 .modifier-pill { color: var(--modifier-color, #eeeaf8); }
 .resistance-item > span:not(.icon-image) { color: var(--data-color, #d4d0e2); font-weight: 700; }
-.affinity-item > span:not(.icon-image) { color: var(--data-color, #ddd9ef); font-weight: 800; }
-.affinity-item b { color: var(--data-color, #f4f1ff); font-weight: 800; }
-.resistance-item .resistance-name { color: var(--data-color, #d4d0e2); font-weight: 800; }
-.resistance-item .resistance-value { color: var(--data-color, #f4f1ff); font: 800 12px 'Manrope', sans-serif; margin-left: 2px; }
-
-.summary-resists .resistance-item {
-  gap: 5px;
-  font-size: 11px;
-}
-.summary-resists .resistance-item .icon-image {
-  width: 20px;
-  height: 20px;
-  flex-basis: 20px;
-}
-.summary-resists .resistance-item .resistance-value {
-  font-size: 11px;
-}
-
-.summary-affinities {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 9px 14px;
-}
-.summary-affinity {
-  display: inline-grid;
-  grid-template-columns: 24px auto auto;
-  align-items: center;
-  gap: 7px;
-  white-space: nowrap;
-  font: 700 12px 'Manrope', sans-serif;
-  line-height: 1.2;
-}
-.summary-affinity .affinity-name { color: var(--data-color, #ddd9ef); font-weight: 800; }
-.summary-affinity .affinity-value { color: var(--data-color, #f4f1ff); font: 800 12px 'Manrope', sans-serif; }
-.summary-affinity .icon-image { width: 24px; height: 24px; flex-basis: 24px; }
+.affinity-item > span:not(.icon-image) { color: var(--data-color, #ddd9ef); font-weight: 700; }
+.affinity-item b { color: var(--data-color, #f4f1ff); }
 
 .loadout-section {
   padding: 16px 0 0;
@@ -316,3 +276,6 @@
   .loadout-image-wrap img { max-height: 440px; }
   .loadout-copy { padding: 10px 0 4px; }
 }
+
+/* Local icon colors are applied by the PNG filter below. The source PNGs should be white on transparent. */
+

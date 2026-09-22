@@ -68,12 +68,72 @@ function setStatus(type, text) {
   }
 }
 
+const LOCAL_ICON_FILES = {
+  elements: { Hydro: 'hydro.png', Gale: 'gale.png', Wind: 'gale.png', Terra: 'terra.png', Fire: 'flame.png', Flame: 'flame.png', Storm: 'storm.png', Light: 'light.png', Dark: 'dark.png' },
+  archetypes: { Magical: 'magical.png', Physical: 'physical.png', Psychic: 'psychic.png' },
+  modifiers: { Bulwark: 'bulwark.png', 'Zone Debuff': 'zone_debuff.png', Transformer: 'transformer.png', Greed: 'greed.png', Shielded: 'shielded.png', Summoner: 'summoner.png', Burrowing: 'burrowing.png', Tartaros: 'tartaros.png', Momentum: 'momentum.png', 'Status Cleanse': 'status_cleanse.png', Commander: 'commander.png', Stunner: 'stunner.png', Sword: 'sword.png' }
+};
+
 function iconHTML(type, name, className = '') {
   const clean = String(name ?? '').trim();
-  const icon = getIcon(type, clean);
-  if (!icon) return '';
+  const file = LOCAL_ICON_FILES[type]?.[clean];
+  if (!file) return '';
 
-  return `<img class="icon-image ${className}" src="${escapeHTML(icon)}" alt="" aria-hidden="true" draggable="false">`;
+  const color = getIconColor(clean);
+  return `<img class="icon-image ${escapeHTML(className)}" src="assets/${escapeHTML(type)}/${escapeHTML(file)}" alt="" aria-hidden="true" data-icon-name="${escapeHTML(clean)}" style="--icon-color:${escapeHTML(color)}">`;
+}
+
+function mixHex(a, b, amount) {
+  const hex = value => {
+    const clean = String(value).replace('#', '');
+    return [parseInt(clean.slice(0, 2), 16), parseInt(clean.slice(2, 4), 16), parseInt(clean.slice(4, 6), 16)];
+  };
+  const [ar, ag, ab] = hex(a);
+  const [br, bg, bb] = hex(b);
+  const mix = (x, y) => Math.round(x + (y - x) * amount);
+  return `rgb(${mix(ar, br)}, ${mix(ag, bg)}, ${mix(ab, bb)})`;
+}
+
+function tintLocalIcon(img) {
+  if (!img || img.dataset.tinted === 'true') return;
+
+  const apply = () => {
+    if (img.dataset.tinted === 'true' || !img.naturalWidth || !img.naturalHeight) return;
+
+    const size = Math.max(img.naturalWidth, img.naturalHeight);
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const x = (size - img.naturalWidth) / 2;
+    const y = (size - img.naturalHeight) / 2;
+    ctx.drawImage(img, x, y);
+
+    const base = getIconColor(img.dataset.iconName || '');
+    const light = mixHex(base, '#FFFFFF', 0.32);
+    const dark = mixHex(base, '#000000', 0.16);
+    const gradient = ctx.createLinearGradient(0, 0, size, size);
+    gradient.addColorStop(0, light);
+    gradient.addColorStop(0.48, base);
+    gradient.addColorStop(1, dark);
+
+    ctx.globalCompositeOperation = 'source-in';
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, size, size);
+
+    img.dataset.tinted = 'true';
+    img.style.filter = 'none';
+    img.src = canvas.toDataURL('image/png');
+  };
+
+  if (img.complete) apply();
+  else img.addEventListener('load', apply, { once: true });
+}
+
+function tintLocalIcons(root = document) {
+  root.querySelectorAll?.('.icon-image').forEach(tintLocalIcon);
 }
 
 const MODIFIER_COLORS = {
@@ -144,7 +204,7 @@ function resistanceHTML(type, value) {
   const clean = displayValue(value);
   if (clean === '---') return '<span class="muted-value">---</span>';
   const color = getIconColor(type);
-  return `<span class="resistance-item" style="--data-color:${escapeHTML(color)}">${iconHTML('archetypes', type)}<span class="resistance-name">${escapeHTML(type)}</span><b class="resistance-value">${escapeHTML(clean)}</b></span>`;
+  return `<span class="resistance-item" style="--data-color:${escapeHTML(color)}">${iconHTML('archetypes', type)}<span>${escapeHTML(clean)}</span></span>`;
 }
 
 const ELEMENT_NAMES = new Set(['Hydro', 'Gale', 'Terra', 'Flame', 'Storm', 'Light', 'Dark']);
@@ -182,7 +242,7 @@ function affinityHTML(item) {
   const element = displayValue(item.element);
   const value = displayValue(item.value);
   const color = getIconColor(element);
-  return `<span class="affinity-item" style="--data-color:${escapeHTML(color)}">${iconHTML('elements', element)}<span class="affinity-name">${escapeHTML(element)}</span><b class="affinity-value">${escapeHTML(value)}</b></span>`;
+  return `<span class="affinity-item" style="--data-color:${escapeHTML(color)}">${iconHTML('elements', element)}<span>${escapeHTML(element)}</span><b>${escapeHTML(value)}</b></span>`;
 }
 
 function loadoutHTML(floor) {
@@ -214,7 +274,7 @@ function floorSummary(floor) {
   const modifier = cleanModifier(floor.modifier);
   const affinities = normalizeAffinityList(floor.affinities);
   const summaryAffinities = affinities.length
-    ? affinities.map(item => `<span class="summary-affinity" style="--data-color:${escapeHTML(getIconColor(item.element))}">${iconHTML('elements', item.element)}<span class="affinity-name">${escapeHTML(item.element)}</span><b class="affinity-value">${escapeHTML(item.value)}</b></span>`).join('')
+    ? affinities.map(item => `<span class="summary-affinity">${iconHTML('elements', item.element)}<span>${escapeHTML(item.element)}</span><b>${escapeHTML(item.value)}</b></span>`).join('')
     : '<span class="muted-value">---</span>';
 
   return `<button class="floor-summary" type="button" aria-expanded="false">
@@ -312,6 +372,7 @@ function render() {
   );
 
   listEl.innerHTML = ordered.map(floorCard).join('');
+  tintLocalIcons(listEl);
   bindLoadoutTabs(listEl);
   emptyEl.classList.toggle('hidden', ordered.length !== 0);
   resultCountEl.textContent = `${ordered.length} of ${floors.length} floors`;
@@ -326,6 +387,7 @@ function render() {
       const floor = floors.find(item => String(item.floor) === card.dataset.floor);
       if (floor) {
         host.innerHTML = floorDetails(floor);
+        tintLocalIcons(host);
         host.dataset.rendered = 'true';
         bindLoadoutTabs(host);
       }

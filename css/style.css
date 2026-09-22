@@ -248,6 +248,7 @@ footer strong { color: #8379e8; }
 
 
 /* Final floor readability */
+.icon-image { image-rendering: auto; }
 .summary-affinities { align-content: center; }
 
 .tower-notes { display: grid; gap: 10px; margin-top: 16px; }
