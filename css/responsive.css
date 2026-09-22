@@ -52,23 +52,25 @@
   .info-steps div:last-child { border-bottom: 0; }
 }
 
-
-@media (max-width: 1050px) {
-  .floor-summary {
-    grid-template-columns: 64px minmax(190px, 1.3fr) 1fr 86px 34px;
-    gap: 11px;
-  }
-  .summary-hp:nth-of-type(5), .summary-resists { display: none; }
+/* Final mobile readability overrides */
+@media (max-width: 760px) {
+  .floor-summary { min-height: 78px; padding: 12px 13px; grid-template-columns: 54px minmax(0, 1fr) 90px 38px; gap: 10px; }
+  .summary-modifier, .summary-enemy-hp, .summary-resists { display: none; }
+  .summary-hp.summary-boss-hp { display: grid; }
+  .floor-number { font-size: 22px; font-family: 'Inter', sans-serif; }
+  .stage-boss strong { font-size: 15px; }
+  .stage-boss small { font-size: 13px; }
+  .summary-hp b { font-family: 'Inter', sans-serif; font-size: 14px; }
+  .summary-hp small { font-size: 10px; }
+  .icon-image { width: 29px; height: 29px; flex-basis: 29px; }
+  .icon-image.modifier-icon { width: 34px; height: 34px; flex-basis: 34px; }
 }
 
-@media (max-width: 760px) {
-  .floor-summary {
-    min-height: 76px;
-    grid-template-columns: 52px 1fr 34px;
-    gap: 10px;
-    padding: 10px 12px;
-  }
-  .floor-number { font-size: 18px; }
+@media (max-width: 480px) {
+  .floor-summary { grid-template-columns: 48px minmax(0, 1fr) 78px 36px; gap: 8px; padding: 11px 10px; }
+  .floor-number { font-size: 20px; }
   .stage-boss strong { font-size: 14px; }
   .stage-boss small { font-size: 12px; }
+  .summary-hp b { font-size: 13px; }
+  .summary-hp small { font-size: 9px; }
 }
