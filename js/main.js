@@ -21,6 +21,7 @@ const statusEl = $('#apiStatus');
 const listEl = $('#towerList');
 const emptyEl = $('#emptyState');
 const searchEl = $('#searchInput');
+const countEl = $('#floorCount');
 const stageFilterEl = $('#stageFilter');
 const resultCountEl = $('#resultCount');
 const clearSearchEl = $('#clearSearch');
@@ -57,10 +58,14 @@ function setStatus(type, text) {
   if (!statusEl) return;
   statusEl.className = `status ${type}`;
   statusEl.querySelector('span').textContent = text;
-  $('#homeApiStatus').textContent = type === 'online' ? 'Data available and synchronized' : text;
-  $('#homeLastSync').textContent = type === 'online'
-    ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    : '—';
+  const homeApiStatusEl = $('#homeApiStatus');
+  if (homeApiStatusEl) homeApiStatusEl.textContent = type === 'online' ? 'Data available and synchronized' : text;
+  const homeLastSyncEl = $('#homeLastSync');
+  if (homeLastSyncEl) {
+    homeLastSyncEl.textContent = type === 'online'
+      ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      : '—';
+  }
 }
 
 function iconHTML(type, name, className = '') {
@@ -69,7 +74,7 @@ function iconHTML(type, name, className = '') {
   if (!icon) return '';
 
   const color = getIconColor(clean);
-  return `<span class="icon-mask ${className}" aria-hidden="true" style="--icon-url:url("${escapeHTML(icon)}");--icon-color:${escapeHTML(color)}"></span>`;
+  return `<span class="icon-mask ${className}" aria-hidden="true" style="--icon-color:${escapeHTML(color)};--icon-url:url('${escapeHTML(icon)}')"></span>`;
 }
 
 const MODIFIER_COLORS = {
@@ -384,6 +389,7 @@ async function init() {
     floors = await fetchTowerData();
     floors = floors.filter(floor => Number.isInteger(Number(floor.floor)));
     floors.sort((a, b) => Number(a.floor) - Number(b.floor));
+    if (countEl) countEl.textContent = floors.length;
     updateHomeStatsAnimated();
     populateStageFilter();
     setStatus('online', 'Synchronized');
@@ -398,10 +404,10 @@ async function init() {
     listEl.innerHTML = `<div class="error-card"><strong>The Tower data could not be loaded.</strong><span>${escapeHTML(error.message)}</span><small>Check the Apps Script web app deployment and refresh the page.</small><button class="small-button retry-button" id="retryFetch" type="button">↻ Try again</button></div>`;
     $('#retryFetch')?.addEventListener('click', init);
     resultCountEl.textContent = '0 of 0 floors';
+    if (countEl) countEl.textContent = '—';
     $('#homeFloorCount') && ($('#homeFloorCount').textContent = '—');
     $('#homeModifierCount') && ($('#homeModifierCount').textContent = '—');
     $('#homeStageCount') && ($('#homeStageCount').textContent = '—');
-    if (countEl) countEl.textContent = '—';
   }
 }
 
