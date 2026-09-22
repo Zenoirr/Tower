@@ -473,6 +473,7 @@
   font-weight: 800;
 }
 .hard-vote-button:hover:not(:disabled) { background: #28152b; border-color: #ff6670; transform: translateY(-1px); }
+.hard-vote-button.is-loading { opacity: .65; cursor: wait; }
 .hard-vote-button.voted { border-color: rgba(88,214,164,.4); background: rgba(88,214,164,.08); color: #a9efd2; cursor: default; }
 .hard-vote-button em { color: var(--muted); font-style: normal; font: 700 10px 'Space Mono', monospace; }
 .floor-share-row { display: flex; justify-content: flex-end; padding-top: 12px; }

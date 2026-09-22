@@ -4,8 +4,6 @@ let activeStage = 'all';
 let sortAscending = true;
 let strategies = {};
 const HARD_VOTE_THRESHOLD = 5;
-const HARD_VOTES_KEY = 'towerOfGoyHardVotes:v1';
-const HARD_VOTED_KEY = 'towerOfGoyHardVoted:v1';
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -200,41 +198,6 @@ function affinityHTML(item) {
   const value = displayValue(item.value);
   const color = getIconColor(rawElement);
   return `<span class="affinity-item" style="--data-color:${escapeHTML(color)}">${iconHTML('elements', rawElement)}<span style="color:${escapeHTML(color)}">${escapeHTML(element)}</span><b style="color:${escapeHTML(color)}">${escapeHTML(value)}</b></span>`;
-}
-
-function getHardVotes(floor) {
-  try {
-    const votes = JSON.parse(localStorage.getItem(HARD_VOTES_KEY) || '{}');
-    const value = Number(votes[String(floor)] || 0);
-    return Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
-  } catch (_) {
-    return 0;
-  }
-}
-
-function hasVotedHard(floor) {
-  try {
-    const voted = JSON.parse(localStorage.getItem(HARD_VOTED_KEY) || '{}');
-    return voted[String(floor)] === true;
-  } catch (_) {
-    return false;
-  }
-}
-
-function voteHard(floor) {
-  const floorKey = String(floor);
-  if (hasVotedHard(floorKey)) return false;
-  try {
-    const votes = JSON.parse(localStorage.getItem(HARD_VOTES_KEY) || '{}');
-    const voted = JSON.parse(localStorage.getItem(HARD_VOTED_KEY) || '{}');
-    votes[floorKey] = Math.max(0, Number(votes[floorKey] || 0)) + 1;
-    voted[floorKey] = true;
-    localStorage.setItem(HARD_VOTES_KEY, JSON.stringify(votes));
-    localStorage.setItem(HARD_VOTED_KEY, JSON.stringify(voted));
-    return true;
-  } catch (_) {
-    return false;
-  }
 }
 
 function strategyHTML(floor) {
@@ -548,18 +511,30 @@ function bindHardVoteButtons(scope = document) {
   scope.querySelectorAll('[data-hard-vote]').forEach(button => {
     if (button.dataset.bound === '1') return;
     button.dataset.bound = '1';
-    button.addEventListener('click', event => {
+    button.addEventListener('click', async event => {
       event.stopPropagation();
       const floorNumber = Number(button.dataset.hardVote);
-      if (!Number.isInteger(floorNumber) || !voteHard(floorNumber)) return;
-      const scrollY = window.scrollY;
-      render();
-      requestAnimationFrame(() => {
-        const card = document.querySelector(`.floor-card[data-floor="${floorNumber}"]`);
-        const summary = card?.querySelector('.floor-summary');
-        if (summary) summary.click();
-        window.scrollTo({ top: scrollY, behavior: 'auto' });
-      });
+      if (!Number.isInteger(floorNumber) || hasVotedHard(floorNumber)) return;
+
+      button.disabled = true;
+      button.classList.add('is-loading');
+      try {
+        const voted = await voteHard(floorNumber);
+        if (!voted) return;
+        const scrollY = window.scrollY;
+        render();
+        requestAnimationFrame(() => {
+          const card = document.querySelector(`.floor-card[data-floor="${floorNumber}"]`);
+          const summary = card?.querySelector('.floor-summary');
+          if (summary) summary.click();
+          window.scrollTo({ top: scrollY, behavior: 'auto' });
+        });
+      } catch (error) {
+        console.error('Hard vote failed:', error);
+        button.disabled = false;
+        button.classList.remove('is-loading');
+        alert(error.message || 'Could not register the vote.');
+      }
     });
   });
 }
@@ -577,6 +552,11 @@ async function init() {
     updateHomeStatsAnimated();
     populateStageFilter();
     setStatus('online', 'Synchronized');
+    try {
+      await loadSharedVotes();
+    } catch (voteError) {
+      console.warn('Shared votes could not be loaded:', voteError);
+    }
     render();
     handleRoute();
     detectLoadouts(floors).then(() => {
