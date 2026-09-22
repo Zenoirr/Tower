@@ -125,14 +125,6 @@
   color: #d4d0e2;
 }
 
-.data-icon {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 24px;
-  object-fit: contain;
-  display: inline-block;
-  vertical-align: middle;
-}
 
 .modifier-pill {
   gap: 8px;
@@ -202,11 +194,11 @@
   display: none;
 }
 
-/* Local PNG icon system: one image element per icon, no masks or pseudo-elements. */
-.icon-image { width: 24px; height: 24px; flex: 0 0 24px; display: inline-block; object-fit: contain; vertical-align: middle; filter: none; }
-.icon-image.modifier-icon { width: 28px; height: 28px; flex-basis: 28px; }
-.summary-affinity .icon-image { width: 24px; height: 24px; flex-basis: 24px; }
-.affinity-item .icon-image { width: 28px; height: 28px; flex-basis: 28px; }
+/* Local PNG icon system: baked-color PNGs, one image element per icon. */
+.icon-image { width:24px; height:24px; flex:0 0 24px; display:block; object-fit:contain; object-position:center; vertical-align:middle; filter:none; background:none; border:0; box-shadow:none; }
+.icon-image.modifier-icon { width:28px; height:28px; flex-basis:28px; }
+.summary-affinity .icon-image { width:24px; height:24px; flex-basis:24px; }
+.affinity-item .icon-image { width:28px; height:28px; flex-basis:28px; }
 
 .summary-boss-hp b, .hp-row-boss b { color: #ff4b57; }
 .summary-enemy-hp b, .hp-row-enemy b { color: #72d69a; }

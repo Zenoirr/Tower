@@ -80,40 +80,8 @@ function iconHTML(type, name, className = '') {
   if (!file) return '';
 
   const color = getIconColor(clean);
-  return `<img class="icon-image ${escapeHTML(className)}" src="assets/${escapeHTML(type)}/${escapeHTML(file)}" alt="" aria-hidden="true" data-icon-name="${escapeHTML(clean)}" style="--icon-color:${escapeHTML(color)};filter:${escapeHTML(getIconFilter(clean))}">`;
+  return `<img class="icon-image ${escapeHTML(className)}" src="assets/${escapeHTML(type)}/${escapeHTML(file)}" alt="" aria-hidden="true" data-icon-name="${escapeHTML(clean)}" style="--icon-color:${escapeHTML(color)}">`;
 }
-
-function getIconFilter(name) {
-  const filters = {
-    Magical: 'brightness(0) saturate(100%) invert(69%) sepia(87%) saturate(1800%) hue-rotate(161deg) brightness(98%) contrast(94%)',
-    Physical: 'brightness(0) saturate(100%) invert(18%) sepia(94%) saturate(3500%) hue-rotate(344deg) brightness(84%) contrast(100%)',
-    Psychic: 'brightness(0) saturate(100%) invert(51%) sepia(76%) saturate(1600%) hue-rotate(285deg) brightness(101%) contrast(91%)',
-    Hydro: 'brightness(0) saturate(100%) invert(54%) sepia(91%) saturate(1761%) hue-rotate(186deg) brightness(101%) contrast(97%)',
-    Gale: 'brightness(0) saturate(100%) invert(67%) sepia(54%) saturate(714%) hue-rotate(38deg) brightness(95%) contrast(91%)',
-    Wind: 'brightness(0) saturate(100%) invert(67%) sepia(54%) saturate(714%) hue-rotate(38deg) brightness(95%) contrast(91%)',
-    Terra: 'brightness(0) saturate(100%) invert(44%) sepia(47%) saturate(1214%) hue-rotate(343deg) brightness(91%) contrast(88%)',
-    Fire: 'brightness(0) saturate(100%) invert(48%) sepia(96%) saturate(2234%) hue-rotate(359deg) brightness(101%) contrast(102%)',
-    Flame: 'brightness(0) saturate(100%) invert(48%) sepia(96%) saturate(2234%) hue-rotate(359deg) brightness(101%) contrast(102%)',
-    Storm: 'brightness(0) saturate(100%) invert(78%) sepia(48%) saturate(870%) hue-rotate(130deg) brightness(90%) contrast(89%)',
-    Light: 'brightness(0) saturate(100%) invert(84%) sepia(83%) saturate(720%) hue-rotate(351deg) brightness(103%) contrast(98%)',
-    Dark: 'brightness(0) saturate(100%) invert(25%) sepia(96%) saturate(3474%) hue-rotate(258deg) brightness(90%) contrast(107%)',
-    Bulwark: 'brightness(0) saturate(100%) invert(92%) sepia(4%) saturate(70%) hue-rotate(212deg) brightness(93%) contrast(89%)',
-    'Zone Debuff': 'brightness(0) saturate(100%) invert(92%) sepia(4%) saturate(70%) hue-rotate(212deg) brightness(93%) contrast(89%)',
-    Transformer: 'brightness(0) saturate(100%) invert(72%) sepia(3%) saturate(16%) hue-rotate(314deg) brightness(91%) contrast(88%)',
-    Greed: 'brightness(0) saturate(100%) invert(92%) sepia(4%) saturate(70%) hue-rotate(212deg) brightness(93%) contrast(89%)',
-    Shielded: 'brightness(0) saturate(100%) invert(69%) sepia(98%) saturate(1715%) hue-rotate(155deg) brightness(95%) contrast(102%)',
-    Summoner: 'brightness(0) saturate(100%) invert(31%) sepia(98%) saturate(4141%) hue-rotate(273deg) brightness(100%) contrast(104%)',
-    Burrowing: 'brightness(0) saturate(100%) invert(40%) sepia(43%) saturate(1257%) hue-rotate(344deg) brightness(90%) contrast(91%)',
-    Tartaros: 'brightness(0) saturate(100%) invert(72%) sepia(99%) saturate(1197%) hue-rotate(45deg) brightness(105%) contrast(106%)',
-    Momentum: 'brightness(0) saturate(100%) invert(43%) sepia(98%) saturate(1706%) hue-rotate(166deg) brightness(94%) contrast(101%)',
-    'Status Cleanse': 'brightness(0) saturate(100%) invert(92%) sepia(4%) saturate(70%) hue-rotate(212deg) brightness(93%) contrast(89%)',
-    Commander: 'brightness(0) saturate(100%) invert(84%) sepia(98%) saturate(1058%) hue-rotate(3deg) brightness(103%) contrast(101%)',
-    Stunner: 'brightness(0) saturate(100%) invert(92%) sepia(4%) saturate(70%) hue-rotate(212deg) brightness(93%) contrast(89%)',
-    Sword: 'brightness(0) saturate(100%) invert(69%) sepia(98%) saturate(1715%) hue-rotate(155deg) brightness(95%) contrast(102%)'
-  };
-  return filters[String(name ?? '').trim()] || 'none';
-}
-
 
 const MODIFIER_COLORS = {
   Summoner: '#B52BFF',
@@ -183,7 +151,7 @@ function resistanceHTML(type, value) {
   const clean = displayValue(value);
   if (clean === '---') return '<span class="muted-value">---</span>';
   const color = getIconColor(type);
-  return `<span class="resistance-item" style="--data-color:${escapeHTML(color)}">${iconHTML('archetypes', type)}<span>${escapeHTML(clean)}</span></span>`;
+  return `<span class="resistance-item" style="--data-color:${escapeHTML(color)}">${iconHTML('archetypes', type)}<span style="color:${escapeHTML(color)}">${escapeHTML(clean)}</span></span>`;
 }
 
 const ELEMENT_NAMES = new Set(['Hydro', 'Gale', 'Terra', 'Fire', 'Flame', 'Storm', 'Light', 'Dark']);
@@ -227,7 +195,7 @@ function affinityHTML(item) {
   const element = displayElementName(rawElement);
   const value = displayValue(item.value);
   const color = getIconColor(rawElement);
-  return `<span class="affinity-item" style="--data-color:${escapeHTML(color)}">${iconHTML('elements', rawElement)}<span>${escapeHTML(element)}</span><b>${escapeHTML(value)}</b></span>`;
+  return `<span class="affinity-item" style="--data-color:${escapeHTML(color)}">${iconHTML('elements', rawElement)}<span style="color:${escapeHTML(color)}">${escapeHTML(element)}</span><b style="color:${escapeHTML(color)}">${escapeHTML(value)}</b></span>`;
 }
 
 function loadoutHTML(floor) {
@@ -259,7 +227,7 @@ function floorSummary(floor) {
   const modifier = cleanModifier(floor.modifier);
   const affinities = normalizeAffinityList(floor.affinities);
   const summaryAffinities = affinities.length
-    ? affinities.map(item => `<span class="summary-affinity">${iconHTML('elements', item.element)}<span>${escapeHTML(displayElementName(item.element))}</span><b>${escapeHTML(item.value)}</b></span>`).join('')
+    ? affinities.map(item => `<span class="summary-affinity" style="--data-color:${escapeHTML(getIconColor(item.element))}">${iconHTML('elements', item.element)}<span style="color:${escapeHTML(getIconColor(item.element))}">${escapeHTML(displayElementName(item.element))}</span><b style="color:${escapeHTML(getIconColor(item.element))}">${escapeHTML(item.value)}</b></span>`).join('')
     : '<span class="muted-value">---</span>';
 
   return `<button class="floor-summary" type="button" aria-expanded="false">
