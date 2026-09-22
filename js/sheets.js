@@ -89,8 +89,8 @@ function fetchTowerDataJSONP() {
     };
 
     const timeout = setTimeout(() => {
-      finish(() => reject(new Error('The Apps Script API did not return data. Check that the Web App is deployed for Anyone and that the /exec URL is current.')));
-    }, 20000);
+      finish(() => reject(new Error('The Apps Script API did not return data within 120 seconds. The request may still be processing on Google; try again after confirming the Web App is deployed as Anyone.')));
+    }, 120000);
 
     window[callbackName] = (payload) => {
       try {
