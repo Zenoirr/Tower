@@ -96,3 +96,24 @@
   .loadout-image-wrap img { max-height: 390px !important; }
   .loadout-copy { min-height: 0; }
 }
+
+/* Final mobile tower summary: keep resistances + affinities visible. */
+@media (max-width: 760px) {
+  .floor-summary {
+    min-width: 0;
+    min-height: 100px;
+    grid-template-columns: 48px minmax(0, 1fr) 30px;
+    grid-template-rows: auto auto;
+    gap: 6px 9px;
+    padding: 10px;
+  }
+  .floor-summary .floor-number { grid-column: 1; grid-row: 1 / span 2; }
+  .floor-summary .stage-boss { grid-column: 2; grid-row: 1; }
+  .floor-summary .summary-modifier,
+  .floor-summary .summary-hp { display: none; }
+  .floor-summary .summary-combat { display: grid; grid-column: 2; grid-row: 2; }
+  .floor-summary .expand-icon { grid-column: 3; grid-row: 1 / span 2; }
+  .summary-resists { display: flex !important; }
+  .summary-affinities { display: flex !important; }
+  .summary-combat-line { display: flex !important; }
+}

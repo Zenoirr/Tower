@@ -221,12 +221,9 @@ function hardVoteHTML(floor) {
   const floorNumber = Number(floor.floor);
   const votes = getHardVotes(floorNumber);
   const voted = hasVotedHard(floorNumber);
-  return `<section class="hard-vote-panel" data-hard-vote-panel="${escapeHTML(floorNumber)}">
-    <div><span class="section-label">COMMUNITY</span><strong>Is this floor hard?</strong><small>5+ votes places the floor in Hard Floors.</small></div>
-    <button type="button" class="hard-vote-button ${voted ? 'voted' : ''}" data-hard-vote="${escapeHTML(floorNumber)}" ${voted ? 'disabled' : ''}>
-      <span>🔥</span><b>${voted ? 'Voted' : 'Vote Hard'}</b><em>${votes} vote${votes === 1 ? '' : 's'}</em>
-    </button>
-  </section>`;
+  return `<button type="button" class="hard-vote-button hard-vote-compact ${voted ? 'voted' : ''}" data-hard-vote="${escapeHTML(floorNumber)}" ${voted ? 'disabled' : ''} aria-label="${voted ? 'You voted this floor as hard' : 'Vote this floor as hard'}">
+    <span>🔥</span><b>${voted ? 'Voted' : 'Vote Hard'}</b><em>${votes}</em>
+  </button>`;
 }
 
 function loadoutHTML(floor) {
@@ -250,7 +247,12 @@ function loadoutHTML(floor) {
 
   return `<div class="loadout-card" data-floor-loadout="${escapeHTML(floorNumber)}" data-active-loadout="${activeType}">
     <div class="loadout-image-wrap"><img src="${escapeHTML(activeLoadout.image)}" alt="${escapeHTML(activeLoadout.title)} for Floor ${floorNumber}" loading="lazy" decoding="async"></div>
-    <div class="loadout-copy">${tabs}<span class="section-label">LOADOUT</span><strong class="loadout-title">${escapeHTML(activeLoadout.title)}</strong></div>
+    <div class="loadout-copy">
+      ${tabs}
+      <span class="section-label">LOADOUT</span>
+      <strong class="loadout-title">${escapeHTML(activeLoadout.title)}</strong>
+      <div class="loadout-community">${strategyHTML(floor)}${hardVoteHTML(floor)}</div>
+    </div>
   </div>`;
 }
 
@@ -269,8 +271,10 @@ function floorSummary(floor) {
       <span class="summary-modifier">${modifierHTML(modifier)}</span>
       <span class="summary-hp summary-boss-hp"><b class="boss-hp-value">${hpHTML(floor.bossHP?.actual || floor.bossHP?.base, modifier)}</b><small>Boss HP</small></span>
       <span class="summary-hp summary-enemy-hp"><b class="enemy-hp-value">${escapeHTML(displayValue(floor.enemyHP))}</b><small>Enemy HP</small></span>
-      <span class="summary-resists">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</span>
-      <span class="summary-affinities">${summaryAffinities}</span>
+      <span class="summary-combat">
+        <span class="summary-combat-line summary-resists">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</span>
+        <span class="summary-combat-line summary-affinities">${summaryAffinities}</span>
+      </span>
       <span class="expand-icon" aria-hidden="true">+</span>
     </button>`;
 }
@@ -283,7 +287,7 @@ function floorDetails(floor) {
       <section class="info-panel"><div class="panel-title"><span>02</span><strong>HP</strong></div><div class="hp-row hp-row-boss"><span>Base HP</span><b class="boss-hp-value">${hpHTML(floor.bossHP?.base, modifier)}</b></div><div class="hp-row hp-row-boss"><span>Actual HP</span><b class="boss-hp-value">${hpHTML(floor.bossHP?.actual, modifier)}</b></div><div class="hp-row hp-row-enemy"><span>Enemy Wave 1</span><b class="enemy-hp-value">${escapeHTML(displayValue(floor.enemyHP))}</b></div></section>
       <section class="info-panel"><div class="panel-title"><span>03</span><strong>Resistances</strong></div><div class="resistance-list">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</div></section>
       <section class="info-panel affinity-panel"><div class="panel-title"><span>04</span><strong>Affinities</strong></div><div class="affinity-list">${affinities.length ? affinities.map(affinityHTML).join('') : '<span class="muted-value">No affinities listed.</span>'}</div></section>
-    </div><div class="loadout-section">${loadoutHTML(floor)}</div>${strategyHTML(floor)}${hardVoteHTML(floor)}<div class="floor-share-row"><button type="button" class="small-button share-floor-button" data-copy-floor="${escapeHTML(floor.floor)}">🔗 Copy Floor Link</button></div></div></div>`;
+    </div><div class="loadout-section">${loadoutHTML(floor)}${(!hasAnyLoadout(floor.floor) && (strategyHTML(floor) || hardVoteHTML(floor))) ? `<div class="loadout-community-fallback">${strategyHTML(floor)}${hardVoteHTML(floor)}</div>` : ''}</div><div class="floor-share-row"><button type="button" class="small-button share-floor-button" data-copy-floor="${escapeHTML(floor.floor)}">🔗 Copy Floor Link</button></div></div></div>`;
 }
 
 function refreshVisibleLoadouts() {
@@ -521,6 +525,7 @@ function bindHardVoteButtons(scope = document) {
       try {
         const voted = await voteHard(floorNumber);
         if (!voted) return;
+        await refreshSharedVotesUI();
         const scrollY = window.scrollY;
         render();
         requestAnimationFrame(() => {
@@ -537,6 +542,61 @@ function bindHardVoteButtons(scope = document) {
       }
     });
   });
+}
+
+let votesRefreshTimer = null;
+
+function refreshVoteButtonsOnly() {
+  $$('[data-hard-vote]').forEach(button => {
+    const floorNumber = String(button.dataset.hardVote || '');
+    const votes = getHardVotes(floorNumber);
+    const voted = hasVotedHard(floorNumber);
+    const count = button.querySelector('em');
+    const label = button.querySelector('b');
+    if (count) count.textContent = String(votes);
+    if (label) label.textContent = voted ? 'Voted' : 'Vote Hard';
+    button.classList.toggle('voted', voted);
+    button.disabled = voted;
+  });
+
+  $$('.floor-card').forEach(card => {
+    const floorNumber = String(card.dataset.floor || '');
+    const hard = getHardVotes(floorNumber) >= HARD_VOTE_THRESHOLD;
+    const number = card.querySelector('.floor-number');
+    if (!number) return;
+    number.classList.toggle('is-hard', hard);
+    let badge = number.querySelector('.hard-badge');
+    if (hard && !badge) {
+      badge = document.createElement('small');
+      badge.className = 'hard-badge';
+      badge.textContent = 'HARD';
+      number.appendChild(badge);
+    } else if (!hard && badge) {
+      badge.remove();
+    }
+  });
+}
+
+async function refreshSharedVotesUI() {
+  try {
+    const before = JSON.stringify(sharedHardVotes);
+    await loadSharedVotes();
+    const changed = before !== JSON.stringify(sharedHardVotes);
+    if (!changed) return;
+    if (activeFilter === 'hard') {
+      render();
+    } else {
+      refreshVoteButtonsOnly();
+    }
+  } catch (error) {
+    console.warn('Shared votes refresh failed:', error);
+  }
+}
+
+function startVotesRefresh() {
+  if (votesRefreshTimer) clearInterval(votesRefreshTimer);
+  votesRefreshTimer = setInterval(refreshSharedVotesUI, 30000);
+  window.addEventListener('focus', refreshSharedVotesUI);
 }
 
 async function init() {
@@ -557,6 +617,7 @@ async function init() {
     } catch (voteError) {
       console.warn('Shared votes could not be loaded:', voteError);
     }
+    startVotesRefresh();
     render();
     handleRoute();
     detectLoadouts(floors).then(() => {
@@ -577,9 +638,9 @@ async function init() {
 }
 
 const UPDATE_LOG = {
-  id: 'community-features-1',
+  id: '1',
   category: 'COMMUNITY',
-  version: 'V1.5',
+  version: 'V1',
   title: 'Community features',
   description: 'Hard Floors voting, direct floor links, strategy links and lighter floor interactions were added.'
 };

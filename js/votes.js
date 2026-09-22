@@ -8,7 +8,8 @@ function getVoterId() {
   let id = '';
   try { id = localStorage.getItem(TOWER_VOTER_ID_KEY) || ''; } catch (_) {}
   if (!id) {
-    id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${crypto?.randomUUID?.() || ''}`;
+    const uuid = (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') ? globalThis.crypto.randomUUID() : Math.random().toString(36).slice(2);
+    id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${uuid}`;
     try { localStorage.setItem(TOWER_VOTER_ID_KEY, id); } catch (_) {}
   }
   return id;
@@ -27,7 +28,7 @@ function voteJSONP(params = {}) {
 
     const callbackName = `towerVotesCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const script = document.createElement('script');
-    const query = new URLSearchParams({ ...params, callback: callbackName });
+    const query = new URLSearchParams({ ...params, callback: callbackName, _: Date.now().toString() });
     let finished = false;
 
     const cleanup = () => {
