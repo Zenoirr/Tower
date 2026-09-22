@@ -36,9 +36,9 @@
       <div class="update-backdrop"></div>
       <div class="update-dialog">
         <button class="update-close" id="updateClose" type="button" aria-label="Close updates">×</button>
-        <span class="section-kicker">UPDATE LOG</span>
-        <h2 id="updateModalTitle">V1.1</h2>
-        <p id="updateModalText">Added Floors 276, 250, 171(Traitless) Loadouts</p>
+        <span class="section-kicker" id="updateModalCategory">COMMUNITY</span>
+        <h2 id="updateModalTitle">V1.5 · Community features</h2>
+        <p id="updateModalText">Icon rendering was rebuilt to remove duplicate icon layers, loadout cards no longer add a black frame around images, and Tower information was cleaned up.</p>
         <button class="update-ok" id="updateOk" type="button">OK</button>
       </div>
     </div>
@@ -82,6 +82,7 @@
               <button type="button" data-quick="floor"><span class="quick-icon">#</span><span><b>Floors</b><small>View every floor and its details.</small></span><i>→</i></button>
               <button type="button" data-quick="modifier"><span class="quick-icon">◆</span><span><b>Modifiers</b><small>Find floors with a specific modifier.</small></span><i>→</i></button>
               <button type="button" data-quick="loadout"><span class="quick-icon">◈</span><span><b>Loadouts</b><small>View floors that already have a loadout image.</small></span><i>→</i></button>
+              <button type="button" data-quick="hard"><span class="quick-icon">🔥</span><span><b>Hard Floors</b><small>Community-marked floors with 5+ votes.</small></span><i>→</i></button>
               <button type="button" data-quick="stage"><span class="quick-icon">◎</span><span><b>Stages</b><small>Search by Tower stage.</small></span><i>→</i></button>
             </div>
           </section>
@@ -129,6 +130,7 @@
               <button class="filter-button active" data-filter="all">All</button>
               <button class="filter-button" data-filter="modifier">With modifier</button>
               <button class="filter-button" data-filter="loadout">With loadout</button>
+              <button class="filter-button hard-filter-button" data-filter="hard">Hard</button>
             </div>
             <div class="tower-selects">
               <select id="stageFilter" aria-label="Filtrar por stage"><option value="all">All stages</option></select>

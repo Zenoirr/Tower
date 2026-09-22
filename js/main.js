@@ -2,6 +2,10 @@ let floors = [];
 let activeFilter = 'all';
 let activeStage = 'all';
 let sortAscending = true;
+let strategies = {};
+const HARD_VOTE_THRESHOLD = 5;
+const HARD_VOTES_KEY = 'towerOfGoyHardVotes:v1';
+const HARD_VOTED_KEY = 'towerOfGoyHardVoted:v1';
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -198,6 +202,70 @@ function affinityHTML(item) {
   return `<span class="affinity-item" style="--data-color:${escapeHTML(color)}">${iconHTML('elements', rawElement)}<span style="color:${escapeHTML(color)}">${escapeHTML(element)}</span><b style="color:${escapeHTML(color)}">${escapeHTML(value)}</b></span>`;
 }
 
+function getHardVotes(floor) {
+  try {
+    const votes = JSON.parse(localStorage.getItem(HARD_VOTES_KEY) || '{}');
+    const value = Number(votes[String(floor)] || 0);
+    return Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+  } catch (_) {
+    return 0;
+  }
+}
+
+function hasVotedHard(floor) {
+  try {
+    const voted = JSON.parse(localStorage.getItem(HARD_VOTED_KEY) || '{}');
+    return voted[String(floor)] === true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function voteHard(floor) {
+  const floorKey = String(floor);
+  if (hasVotedHard(floorKey)) return false;
+  try {
+    const votes = JSON.parse(localStorage.getItem(HARD_VOTES_KEY) || '{}');
+    const voted = JSON.parse(localStorage.getItem(HARD_VOTED_KEY) || '{}');
+    votes[floorKey] = Math.max(0, Number(votes[floorKey] || 0)) + 1;
+    voted[floorKey] = true;
+    localStorage.setItem(HARD_VOTES_KEY, JSON.stringify(votes));
+    localStorage.setItem(HARD_VOTED_KEY, JSON.stringify(voted));
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function strategyHTML(floor) {
+  const item = strategies[String(floor.floor)] || {};
+  const text = String(item.text || '').trim();
+  const video = String(item.video || '').trim();
+  if (!text && !video) return '';
+
+  const videoHTML = video
+    ? `<a class="strategy-video" href="${escapeHTML(video)}" target="_blank" rel="noopener noreferrer">▶ Watch strategy video <span>↗</span></a>`
+    : '';
+
+  return `<section class="strategy-section">
+    <div class="strategy-heading"><div><span class="section-label">STRATEGY</span><strong>Community strategy</strong></div></div>
+    ${text ? `<p class="strategy-text">${escapeHTML(text)}</p>` : ''}
+    ${videoHTML}
+  </section>`;
+}
+
+function hardVoteHTML(floor) {
+  const floorNumber = Number(floor.floor);
+  const votes = getHardVotes(floorNumber);
+  const voted = hasVotedHard(floorNumber);
+  return `<section class="hard-vote-panel" data-hard-vote-panel="${escapeHTML(floorNumber)}">
+    <div><span class="section-label">COMMUNITY</span><strong>Is this floor hard?</strong><small>5+ votes places the floor in Hard Floors.</small></div>
+    <button type="button" class="hard-vote-button ${voted ? 'voted' : ''}" data-hard-vote="${escapeHTML(floorNumber)}" ${voted ? 'disabled' : ''}>
+      <span>🔥</span><b>${voted ? 'Voted' : 'Vote Hard'}</b><em>${votes} vote${votes === 1 ? '' : 's'}</em>
+    </button>
+  </section>`;
+}
+
 function loadoutHTML(floor) {
   const floorNumber = Number(floor.floor);
   const trait = getLoadout(floorNumber, 'trait');
@@ -226,12 +294,14 @@ function loadoutHTML(floor) {
 function floorSummary(floor) {
   const modifier = cleanModifier(floor.modifier);
   const affinities = normalizeAffinityList(floor.affinities);
+  const hardVotes = getHardVotes(floor.floor);
+  const isHard = hardVotes >= HARD_VOTE_THRESHOLD;
   const summaryAffinities = affinities.length
     ? affinities.map(item => `<span class="summary-affinity" style="--data-color:${escapeHTML(getIconColor(item.element))}">${iconHTML('elements', item.element)}<span style="color:${escapeHTML(getIconColor(item.element))}">${escapeHTML(displayElementName(item.element))}</span><b style="color:${escapeHTML(getIconColor(item.element))}">${escapeHTML(item.value)}</b></span>`).join('')
     : '<span class="muted-value">---</span>';
 
   return `<button class="floor-summary" type="button" aria-expanded="false">
-      <span class="floor-number">${String(floor.floor).padStart(2, '0')}</span>
+      <span class="floor-number ${isHard ? 'is-hard' : ''}"><b>${String(floor.floor).padStart(2, '0')}</b>${isHard ? '<small class="hard-badge">HARD</small>' : ''}</span>
       <span class="stage-boss"><strong>${escapeHTML(displayValue(floor.stage))}</strong><small>${escapeHTML(displayValue(floor.boss))}</small></span>
       <span class="summary-modifier">${modifierHTML(modifier)}</span>
       <span class="summary-hp summary-boss-hp"><b class="boss-hp-value">${hpHTML(floor.bossHP?.actual || floor.bossHP?.base, modifier)}</b><small>Boss HP</small></span>
@@ -250,7 +320,7 @@ function floorDetails(floor) {
       <section class="info-panel"><div class="panel-title"><span>02</span><strong>HP</strong></div><div class="hp-row hp-row-boss"><span>Base HP</span><b class="boss-hp-value">${hpHTML(floor.bossHP?.base, modifier)}</b></div><div class="hp-row hp-row-boss"><span>Actual HP</span><b class="boss-hp-value">${hpHTML(floor.bossHP?.actual, modifier)}</b></div><div class="hp-row hp-row-enemy"><span>Enemy Wave 1</span><b class="enemy-hp-value">${escapeHTML(displayValue(floor.enemyHP))}</b></div></section>
       <section class="info-panel"><div class="panel-title"><span>03</span><strong>Resistances</strong></div><div class="resistance-list">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</div></section>
       <section class="info-panel affinity-panel"><div class="panel-title"><span>04</span><strong>Affinities</strong></div><div class="affinity-list">${affinities.length ? affinities.map(affinityHTML).join('') : '<span class="muted-value">No affinities listed.</span>'}</div></section>
-    </div><div class="loadout-section">${loadoutHTML(floor)}</div></div></div>`;
+    </div><div class="loadout-section">${loadoutHTML(floor)}</div>${strategyHTML(floor)}${hardVoteHTML(floor)}<div class="floor-share-row"><button type="button" class="small-button share-floor-button" data-copy-floor="${escapeHTML(floor.floor)}">🔗 Copy Floor Link</button></div></div></div>`;
 }
 
 function refreshVisibleLoadouts() {
@@ -310,6 +380,7 @@ function matchesSearch(floor, query) {
 function matchesFilter(floor) {
   if (activeFilter === 'modifier') return Boolean(cleanModifier(floor.modifier));
   if (activeFilter === 'loadout') return hasAnyLoadout(floor.floor);
+  if (activeFilter === 'hard') return getHardVotes(floor.floor) >= HARD_VOTE_THRESHOLD;
   return true;
 }
 
@@ -326,8 +397,23 @@ function render() {
 
   listEl.innerHTML = ordered.map(floorCard).join('');
   bindLoadoutTabs(listEl);
+  bindHardVoteButtons(listEl);
+  bindShareButtons(listEl);
   emptyEl.classList.toggle('hidden', ordered.length !== 0);
-  resultCountEl.textContent = `${ordered.length} of ${floors.length} floors`;
+  const emptyStrong = emptyEl.querySelector('strong');
+  const emptySpan = emptyEl.querySelector('span');
+  if (emptyStrong && emptySpan) {
+    if (activeFilter === 'hard') {
+      emptyStrong.textContent = 'No Hard Floors yet';
+      emptySpan.textContent = "There aren't any floors with 5+ hard votes yet.";
+    } else {
+      emptyStrong.textContent = 'No floors found';
+      emptySpan.textContent = 'Try another search or change the filters.';
+    }
+  }
+  resultCountEl.textContent = activeFilter === 'hard'
+    ? `${ordered.length} hard floors`
+    : `${ordered.length} of ${floors.length} floors`;
   clearSearchEl.classList.toggle('hidden', !query);
 
   $$('.floor-summary').forEach(button => button.addEventListener('click', () => {
@@ -341,6 +427,8 @@ function render() {
         host.innerHTML = floorDetails(floor);
         host.dataset.rendered = 'true';
         bindLoadoutTabs(host);
+        bindHardVoteButtons(host);
+        bindShareButtons(host);
       }
     }
   }));
@@ -383,8 +471,48 @@ function goToTower(query = '') {
 
 function handleRoute() {
   const route = location.hash.replace('#', '') || 'home';
+  const towerFloorMatch = route.match(/^tower\/(\d+)$/);
+  if (towerFloorMatch) {
+    showPage('tower');
+    render();
+    const floorNumber = towerFloorMatch[1];
+    setTimeout(() => {
+      const card = document.querySelector(`.floor-card[data-floor="${floorNumber}"]`);
+      const summary = card?.querySelector('.floor-summary');
+      if (summary && !card.classList.contains('open')) summary.click();
+      card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
+    return;
+  }
   if (route === 'tower' || route === 'info' || route === 'credits' || route === 'home') showPage(route);
   else showPage('home');
+}
+
+function copyFloorLink(floor) {
+  const url = `${location.origin}${location.pathname}#tower/${floor}`;
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(url).then(() => showCopyFeedback(floor)).catch(() => fallbackCopy(url, floor));
+  } else {
+    fallbackCopy(url, floor);
+  }
+}
+
+function fallbackCopy(text, floor) {
+  const input = document.createElement('input');
+  input.value = text;
+  document.body.appendChild(input);
+  input.select();
+  try { document.execCommand('copy'); } catch (_) {}
+  input.remove();
+  showCopyFeedback(floor);
+}
+
+function showCopyFeedback(floor) {
+  const button = document.querySelector(`[data-copy-floor="${floor}"]`);
+  if (!button) return;
+  const old = button.textContent;
+  button.textContent = 'Copied ✓';
+  setTimeout(() => { if (button.isConnected) button.textContent = old; }, 1300);
 }
 
 function updateHomeStatsAnimated() {
@@ -393,11 +521,55 @@ function updateHomeStatsAnimated() {
   animateCount($('#homeStageCount'), new Set(floors.map(f => f.stage).filter(Boolean)).size);
 }
 
+async function loadStrategies() {
+  try {
+    const response = await fetch(`data/strategies.json?v=1`, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Could not load strategies.');
+    const data = await response.json();
+    strategies = data && typeof data === 'object' ? data : {};
+  } catch (error) {
+    console.warn('Strategies could not be loaded:', error);
+    strategies = {};
+  }
+}
+
+function bindShareButtons(scope = document) {
+  scope.querySelectorAll('[data-copy-floor]').forEach(button => {
+    if (button.dataset.bound === '1') return;
+    button.dataset.bound = '1';
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      copyFloorLink(button.dataset.copyFloor);
+    });
+  });
+}
+
+function bindHardVoteButtons(scope = document) {
+  scope.querySelectorAll('[data-hard-vote]').forEach(button => {
+    if (button.dataset.bound === '1') return;
+    button.dataset.bound = '1';
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      const floorNumber = Number(button.dataset.hardVote);
+      if (!Number.isInteger(floorNumber) || !voteHard(floorNumber)) return;
+      const scrollY = window.scrollY;
+      render();
+      requestAnimationFrame(() => {
+        const card = document.querySelector(`.floor-card[data-floor="${floorNumber}"]`);
+        const summary = card?.querySelector('.floor-summary');
+        if (summary) summary.click();
+        window.scrollTo({ top: scrollY, behavior: 'auto' });
+      });
+    });
+  });
+}
+
 async function init() {
   renderSkeletons();
   resultCountEl.textContent = 'Loading...';
   try {
     setStatus('', 'Syncing');
+    await loadStrategies();
     floors = await fetchTowerData();
     floors = floors.filter(floor => Number.isInteger(Number(floor.floor)));
     floors.sort((a, b) => Number(a.floor) - Number(b.floor));
@@ -406,6 +578,7 @@ async function init() {
     populateStageFilter();
     setStatus('online', 'Synchronized');
     render();
+    handleRoute();
     detectLoadouts(floors).then(() => {
       if (activeFilter === 'loadout') render();
       else refreshVisibleLoadouts();
@@ -423,14 +596,26 @@ async function init() {
   }
 }
 
-const UPDATE_LOG_VERSION = '1.4';
+const UPDATE_LOG = {
+  id: 'community-features-1',
+  category: 'COMMUNITY',
+  version: 'V1.5',
+  title: 'Community features',
+  description: 'Hard Floors voting, direct floor links, strategy links and lighter floor interactions were added.'
+};
 
 function closeUpdateLog() {
   $('#updateModal')?.classList.add('hidden');
-  try { localStorage.setItem(`towerOfGoyUpdateSeen:${UPDATE_LOG_VERSION}`, '1'); } catch (_) {}
+  try { localStorage.setItem(`towerOfGoyUpdateSeen:${UPDATE_LOG.id}`, '1'); } catch (_) {}
 }
 
 function openUpdateLog() {
+  const title = $('#updateModalTitle');
+  const text = $('#updateModalText');
+  const category = $('#updateModalCategory');
+  if (title) title.textContent = `${UPDATE_LOG.version} · ${UPDATE_LOG.title}`;
+  if (text) text.textContent = UPDATE_LOG.description;
+  if (category) category.textContent = UPDATE_LOG.category;
   $('#updateModal')?.classList.remove('hidden');
 }
 
@@ -444,7 +629,7 @@ function setupUpdateLog() {
   });
 
   let seen = false;
-  try { seen = localStorage.getItem(`towerOfGoyUpdateSeen:${UPDATE_LOG_VERSION}`) === '1'; } catch (_) {}
+  try { seen = localStorage.getItem(`towerOfGoyUpdateSeen:${UPDATE_LOG.id}`) === '1'; } catch (_) {}
   if (!seen) setTimeout(openUpdateLog, 350);
 }
 
@@ -494,6 +679,7 @@ $$('[data-quick]').forEach(button => button.addEventListener('click', () => {
   setTimeout(async () => {
     if (action === 'modifier') activeFilter = 'modifier';
     else if (action === 'loadout') activeFilter = 'loadout';
+    else if (action === 'hard') activeFilter = 'hard';
     else activeFilter = 'all';
 
     $$('.filter-button').forEach(item => item.classList.toggle('active', item.dataset.filter === activeFilter));
