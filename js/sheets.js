@@ -1,7 +1,5 @@
-const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbwojad__hJO57oQBZ9VgmctDJqlphu6QgQBh8FdEPjlxnaPVlEytFWBL4BFmsnEEdAcVZg/exec';
+const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbwojad__hJO57oQBZ9VgmctDJqlphu6QgQBh8FdEPjlxnaPVtEyFWBL4BFmsnEEdAcVZg/exec';
 
-// Os ícones continuam externos para manter o projeto leve. O CSS usa a transparência
-// dos PNGs como máscara e aplica a cor correta sem precisar armazenar os arquivos.
 const ICONS = {
   archetypes: {
     Magical: 'https://static.wikitide.net/animeexpeditionswiki/e/e9/Magical_Icon.png',
@@ -64,9 +62,56 @@ function cleanModifier(value) {
 }
 
 async function fetchTowerData() {
-  const response = await fetch(SHEETS_API_URL, { cache: 'no-store' });
-  if (!response.ok) throw new Error(`API retornou HTTP ${response.status}`);
-  const payload = await response.json();
-  if (!payload.success) throw new Error(payload.error || 'A API retornou um erro.');
-  return Array.isArray(payload.floors) ? payload.floors : [];
+  try {
+    const response = await fetch(SHEETS_API_URL, { cache: 'no-store', redirect: 'follow' });
+    if (!response.ok) throw new Error(`API returned HTTP ${response.status}`);
+    const payload = await response.json();
+    return validateTowerPayload(payload);
+  } catch (error) {
+    console.warn('Direct API request failed. Trying JSONP fallback.', error);
+    return fetchTowerDataJSONP();
+  }
+}
+
+function validateTowerPayload(payload) {
+  if (!payload || payload.success !== true) throw new Error(payload?.error || 'The API returned an invalid response.');
+  if (!Array.isArray(payload.floors)) throw new Error('The API response does not contain a floors array.');
+  return payload.floors;
+}
+
+function fetchTowerDataJSONP() {
+  return new Promise((resolve, reject) => {
+    const callbackName = `towerGoyCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const script = document.createElement('script');
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('The database request was blocked. Enable JSONP in the Apps Script deployment.'));
+    }, 12000);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      script.remove();
+    }
+
+    window[callbackName] = (payload) => {
+      try {
+        const data = validateTowerPayload(payload);
+        cleanup();
+        resolve(data);
+      } catch (error) {
+        cleanup();
+        reject(error);
+      }
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error('The database could not be reached. Check the Apps Script web app permissions.'));
+    };
+
+    script.src = `${SHEETS_API_URL}?callback=${encodeURIComponent(callbackName)}&_=${Date.now()}`;
+    script.async = true;
+    document.head.appendChild(script);
+  });
 }
