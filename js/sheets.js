@@ -73,15 +73,11 @@ function validateTowerPayload(payload) {
   return payload.floors;
 }
 
-function fetchTowerDataJSONP(attempt = 1) {
-  const maxAttempts = 3;
-  const timeoutMs = 45000;
-
+function fetchTowerDataJSONP() {
   return new Promise((resolve, reject) => {
     const callbackName = `towerGoyCallback_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const script = document.createElement('script');
     let finished = false;
-    let timeout;
 
     const finish = (callback) => {
       if (finished) return;
@@ -92,38 +88,24 @@ function fetchTowerDataJSONP(attempt = 1) {
       callback();
     };
 
-    const retryOrFail = (error) => {
-      if (attempt < maxAttempts) {
-        finish(() => {
-          setTimeout(() => {
-            fetchTowerDataJSONP(attempt + 1).then(resolve).catch(reject);
-          }, 1500 * attempt);
-        });
-        return;
-      }
-
-      finish(() => reject(error));
-    };
-
-    timeout = setTimeout(() => {
-      retryOrFail(new Error('The Apps Script API did not respond in time. The data may still be synchronizing.'));
-    }, timeoutMs);
+    const timeout = setTimeout(() => {
+      finish(() => reject(new Error('The Apps Script API did not return data. Check that the Web App is deployed for Anyone and that the /exec URL is current.')));
+    }, 20000);
 
     window[callbackName] = (payload) => {
       try {
         const data = validateTowerPayload(payload);
         finish(() => resolve(data));
       } catch (error) {
-        retryOrFail(error);
+        finish(() => reject(error));
       }
     };
 
     script.onerror = () => {
-      retryOrFail(new Error('Could not load the Apps Script Web App. The connection may have timed out.'));
+      finish(() => reject(new Error('Could not load the Apps Script Web App. Check the /exec URL and deployment permissions.')));
     };
 
-    const separator = SHEETS_API_URL.includes('?') ? '&' : '?';
-    script.src = `${SHEETS_API_URL}${separator}callback=${encodeURIComponent(callbackName)}&_=${Date.now()}_${attempt}`;
+    script.src = `${SHEETS_API_URL}?callback=${encodeURIComponent(callbackName)}&_=${Date.now()}`;
     script.async = true;
     script.referrerPolicy = 'no-referrer';
     document.head.appendChild(script);

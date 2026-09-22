@@ -69,7 +69,8 @@ function iconHTML(type, name, className = '') {
   const icon = getIcon(type, clean);
   if (!icon) return '';
 
-  return `<img class="icon-image ${className}" src="${escapeHTML(icon)}" alt="" aria-hidden="true" loading="lazy" decoding="async">`;
+  const color = getIconColor(clean);
+  return `<span class="icon-mask ${className}" aria-hidden="true" style="--icon-url:url("${escapeHTML(icon)}");--icon-color:${escapeHTML(color)}"></span>`;
 }
 
 const MODIFIER_COLORS = {
@@ -400,13 +401,13 @@ async function init() {
     $('#retryFetch')?.addEventListener('click', init);
     resultCountEl.textContent = '0 of 0 floors';
     countEl.textContent = '—';
-    $('#homeFloorCount').textContent = '—';
-    $('#homeModifierCount').textContent = '—';
-    $('#homeStageCount').textContent = '—';
+    $('#homeFloorCount') && ($('#homeFloorCount').textContent = '—');
+    $('#homeModifierCount') && ($('#homeModifierCount').textContent = '—');
+    $('#homeStageCount') && ($('#homeStageCount').textContent = '—');
   }
 }
 
-const UPDATE_LOG_VERSION = '1.3';
+const UPDATE_LOG_VERSION = '1.4';
 
 function closeUpdateLog() {
   $('#updateModal')?.classList.add('hidden');
