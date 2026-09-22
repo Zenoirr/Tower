@@ -69,7 +69,7 @@ function setStatus(type, text) {
 }
 
 const LOCAL_ICON_FILES = {
-  elements: { Hydro: 'hydro.png', Gale: 'gale.png', Wind: 'gale.png', Terra: 'terra.png', Fire: 'flame.png', Flame: 'flame.png', Storm: 'storm.png', Light: 'light.png', Dark: 'dark.png' },
+  elements: { Hydro: 'hydro.png', Gale: 'gale.png', Wind: 'gale.png', Terra: 'terra.png', Fire: 'fire.png', Flame: 'fire.png', Storm: 'storm.png', Light: 'light.png', Dark: 'dark.png' },
   archetypes: { Magical: 'magical.png', Physical: 'physical.png', Psychic: 'psychic.png' },
   modifiers: { Bulwark: 'bulwark.png', 'Zone Debuff': 'zone_debuff.png', Transformer: 'transformer.png', Greed: 'greed.png', Shielded: 'shielded.png', Summoner: 'summoner.png', Burrowing: 'burrowing.png', Tartaros: 'tartaros.png', Momentum: 'momentum.png', 'Status Cleanse': 'status_cleanse.png', Commander: 'commander.png', Stunner: 'stunner.png', Sword: 'sword.png' }
 };
@@ -114,13 +114,6 @@ function getIconFilter(name) {
   return filters[String(name ?? '').trim()] || 'none';
 }
 
-function tintLocalIcons(root = document) {
-  root.querySelectorAll?.('.icon-image').forEach(img => {
-    const filter = getIconFilter(img.dataset.iconName || '');
-    img.style.filter = filter;
-    img.dataset.tinted = 'true';
-  });
-}
 
 const MODIFIER_COLORS = {
   Summoner: '#B52BFF',
@@ -193,7 +186,12 @@ function resistanceHTML(type, value) {
   return `<span class="resistance-item" style="--data-color:${escapeHTML(color)}">${iconHTML('archetypes', type)}<span>${escapeHTML(clean)}</span></span>`;
 }
 
-const ELEMENT_NAMES = new Set(['Hydro', 'Gale', 'Terra', 'Flame', 'Storm', 'Light', 'Dark']);
+const ELEMENT_NAMES = new Set(['Hydro', 'Gale', 'Terra', 'Fire', 'Flame', 'Storm', 'Light', 'Dark']);
+
+function displayElementName(name) {
+  const clean = String(name ?? '').trim();
+  return clean === 'Flame' ? 'Fire' : clean;
+}
 
 function normalizeAffinityList(list) {
   if (!Array.isArray(list)) return [];
@@ -225,10 +223,11 @@ function normalizeAffinityList(list) {
 }
 
 function affinityHTML(item) {
-  const element = displayValue(item.element);
+  const rawElement = displayValue(item.element);
+  const element = displayElementName(rawElement);
   const value = displayValue(item.value);
-  const color = getIconColor(element);
-  return `<span class="affinity-item" style="--data-color:${escapeHTML(color)}">${iconHTML('elements', element)}<span>${escapeHTML(element)}</span><b>${escapeHTML(value)}</b></span>`;
+  const color = getIconColor(rawElement);
+  return `<span class="affinity-item" style="--data-color:${escapeHTML(color)}">${iconHTML('elements', rawElement)}<span>${escapeHTML(element)}</span><b>${escapeHTML(value)}</b></span>`;
 }
 
 function loadoutHTML(floor) {
@@ -260,7 +259,7 @@ function floorSummary(floor) {
   const modifier = cleanModifier(floor.modifier);
   const affinities = normalizeAffinityList(floor.affinities);
   const summaryAffinities = affinities.length
-    ? affinities.map(item => `<span class="summary-affinity">${iconHTML('elements', item.element)}<span>${escapeHTML(item.element)}</span><b>${escapeHTML(item.value)}</b></span>`).join('')
+    ? affinities.map(item => `<span class="summary-affinity">${iconHTML('elements', item.element)}<span>${escapeHTML(displayElementName(item.element))}</span><b>${escapeHTML(item.value)}</b></span>`).join('')
     : '<span class="muted-value">---</span>';
 
   return `<button class="floor-summary" type="button" aria-expanded="false">
@@ -358,7 +357,6 @@ function render() {
   );
 
   listEl.innerHTML = ordered.map(floorCard).join('');
-  tintLocalIcons(listEl);
   bindLoadoutTabs(listEl);
   emptyEl.classList.toggle('hidden', ordered.length !== 0);
   resultCountEl.textContent = `${ordered.length} of ${floors.length} floors`;
@@ -373,7 +371,6 @@ function render() {
       const floor = floors.find(item => String(item.floor) === card.dataset.floor);
       if (floor) {
         host.innerHTML = floorDetails(floor);
-        tintLocalIcons(host);
         host.dataset.rendered = 'true';
         bindLoadoutTabs(host);
       }
