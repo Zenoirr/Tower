@@ -90,3 +90,9 @@
   .summary-affinity .icon-image { width: 21px; height: 21px; flex-basis: 21px; }
   .loadout-tabs { margin-bottom: 10px; }
 }
+
+@media (max-width: 1050px) {
+  .loadout-card { grid-template-columns: 1fr; }
+  .loadout-image-wrap img { max-height: 390px !important; }
+  .loadout-copy { min-height: 0; }
+}

@@ -69,10 +69,7 @@ function iconHTML(type, name, className = '') {
   const icon = getIcon(type, clean);
   if (!icon) return '';
 
-  const color = getIconColor(clean);
-  const safeIcon = escapeHTML(icon);
-  const safeColor = escapeHTML(color);
-  return `<span class="icon-image ${className}" aria-hidden="true" style="--icon-color:${safeColor};--icon-url:url('${safeIcon}')"></span>`;
+  return `<img class="icon-image ${className}" src="${escapeHTML(icon)}" alt="" aria-hidden="true" loading="lazy" decoding="async">`;
 }
 
 const MODIFIER_COLORS = {
@@ -220,8 +217,8 @@ function floorSummary(floor) {
       <span class="floor-number">${String(floor.floor).padStart(2, '0')}</span>
       <span class="stage-boss"><strong>${escapeHTML(displayValue(floor.stage))}</strong><small>${escapeHTML(displayValue(floor.boss))}</small></span>
       <span class="summary-modifier">${modifierHTML(modifier)}</span>
-      <span class="summary-hp summary-boss-hp"><b>${hpHTML(floor.bossHP?.actual || floor.bossHP?.base, modifier)}</b><small>Boss HP</small></span>
-      <span class="summary-hp summary-enemy-hp"><b>${escapeHTML(displayValue(floor.enemyHP))}</b><small>Enemy HP</small></span>
+      <span class="summary-hp summary-boss-hp"><b class="boss-hp-value">${hpHTML(floor.bossHP?.actual || floor.bossHP?.base, modifier)}</b><small>Boss HP</small></span>
+      <span class="summary-hp summary-enemy-hp"><b class="enemy-hp-value">${escapeHTML(displayValue(floor.enemyHP))}</b><small>Enemy HP</small></span>
       <span class="summary-resists">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</span>
       <span class="summary-affinities">${summaryAffinities}</span>
       <span class="expand-icon" aria-hidden="true">+</span>
@@ -233,7 +230,7 @@ function floorDetails(floor) {
   const affinities = normalizeAffinityList(floor.affinities);
   return `<div class="floor-details"><div class="details-inner"><div class="details-grid">
       <section class="info-panel"><div class="panel-title"><span>01</span><strong>Boss</strong></div><div class="boss-name">${escapeHTML(displayValue(floor.boss))}</div><div class="modifier-line"><span class="label">Modifier</span>${modifierHTML(modifier)}</div></section>
-      <section class="info-panel"><div class="panel-title"><span>02</span><strong>HP</strong></div><div class="hp-row hp-row-boss"><span>Base HP</span><b>${hpHTML(floor.bossHP?.base, modifier)}</b></div><div class="hp-row hp-row-boss"><span>Actual HP</span><b>${hpHTML(floor.bossHP?.actual, modifier)}</b></div><div class="hp-row hp-row-enemy"><span>Enemy Wave 1</span><b>${escapeHTML(displayValue(floor.enemyHP))}</b></div></section>
+      <section class="info-panel"><div class="panel-title"><span>02</span><strong>HP</strong></div><div class="hp-row hp-row-boss"><span>Base HP</span><b class="boss-hp-value">${hpHTML(floor.bossHP?.base, modifier)}</b></div><div class="hp-row hp-row-boss"><span>Actual HP</span><b class="boss-hp-value">${hpHTML(floor.bossHP?.actual, modifier)}</b></div><div class="hp-row hp-row-enemy"><span>Enemy Wave 1</span><b class="enemy-hp-value">${escapeHTML(displayValue(floor.enemyHP))}</b></div></section>
       <section class="info-panel"><div class="panel-title"><span>03</span><strong>Resistances</strong></div><div class="resistance-list">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</div></section>
       <section class="info-panel affinity-panel"><div class="panel-title"><span>04</span><strong>Affinities</strong></div><div class="affinity-list">${affinities.length ? affinities.map(affinityHTML).join('') : '<span class="muted-value">No affinities listed.</span>'}</div></section>
     </div><div class="loadout-section">${loadoutHTML(floor)}</div></div></div>`;
@@ -409,7 +406,7 @@ async function init() {
   }
 }
 
-const UPDATE_LOG_VERSION = '1.2';
+const UPDATE_LOG_VERSION = '1.3';
 
 function closeUpdateLog() {
   $('#updateModal')?.classList.add('hidden');

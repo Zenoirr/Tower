@@ -250,3 +250,10 @@ footer strong { color: #8379e8; }
 /* Final floor readability */
 .icon-image { image-rendering: auto; }
 .summary-affinities { align-content: center; }
+
+.tower-notes { display: grid; gap: 10px; margin-top: 16px; }
+.tower-note { padding: 13px 14px; border: 1px solid var(--line); background: rgba(255,255,255,.018); }
+.tower-note .note-tag { display: block; color: #8278e8; font: 700 9px 'Space Mono', monospace; letter-spacing: 1.2px; margin-bottom: 7px; }
+.tower-note strong { display: inline-flex; align-items: baseline; gap: 7px; margin-right: 18px; font-size: 17px; }
+.tower-note strong em { color: var(--muted-2); font-size: 9px; font-style: normal; font-family: 'Space Mono', monospace; letter-spacing: .3px; }
+.tower-note p { color: var(--muted); font-size: 12px; line-height: 1.55; }
