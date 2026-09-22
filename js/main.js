@@ -80,60 +80,46 @@ function iconHTML(type, name, className = '') {
   if (!file) return '';
 
   const color = getIconColor(clean);
-  return `<img class="icon-image ${escapeHTML(className)}" src="assets/${escapeHTML(type)}/${escapeHTML(file)}" alt="" aria-hidden="true" data-icon-name="${escapeHTML(clean)}" style="--icon-color:${escapeHTML(color)}">`;
+  return `<img class="icon-image ${escapeHTML(className)}" src="assets/${escapeHTML(type)}/${escapeHTML(file)}" alt="" aria-hidden="true" data-icon-name="${escapeHTML(clean)}" style="--icon-color:${escapeHTML(color)};filter:${escapeHTML(getIconFilter(clean))}">`;
 }
 
-function mixHex(a, b, amount) {
-  const hex = value => {
-    const clean = String(value).replace('#', '');
-    return [parseInt(clean.slice(0, 2), 16), parseInt(clean.slice(2, 4), 16), parseInt(clean.slice(4, 6), 16)];
+function getIconFilter(name) {
+  const filters = {
+    Magical: 'brightness(0) saturate(100%) invert(69%) sepia(87%) saturate(1800%) hue-rotate(161deg) brightness(98%) contrast(94%)',
+    Physical: 'brightness(0) saturate(100%) invert(18%) sepia(94%) saturate(3500%) hue-rotate(344deg) brightness(84%) contrast(100%)',
+    Psychic: 'brightness(0) saturate(100%) invert(51%) sepia(76%) saturate(1600%) hue-rotate(285deg) brightness(101%) contrast(91%)',
+    Hydro: 'brightness(0) saturate(100%) invert(54%) sepia(91%) saturate(1761%) hue-rotate(186deg) brightness(101%) contrast(97%)',
+    Gale: 'brightness(0) saturate(100%) invert(67%) sepia(54%) saturate(714%) hue-rotate(38deg) brightness(95%) contrast(91%)',
+    Wind: 'brightness(0) saturate(100%) invert(67%) sepia(54%) saturate(714%) hue-rotate(38deg) brightness(95%) contrast(91%)',
+    Terra: 'brightness(0) saturate(100%) invert(44%) sepia(47%) saturate(1214%) hue-rotate(343deg) brightness(91%) contrast(88%)',
+    Fire: 'brightness(0) saturate(100%) invert(48%) sepia(96%) saturate(2234%) hue-rotate(359deg) brightness(101%) contrast(102%)',
+    Flame: 'brightness(0) saturate(100%) invert(48%) sepia(96%) saturate(2234%) hue-rotate(359deg) brightness(101%) contrast(102%)',
+    Storm: 'brightness(0) saturate(100%) invert(78%) sepia(48%) saturate(870%) hue-rotate(130deg) brightness(90%) contrast(89%)',
+    Light: 'brightness(0) saturate(100%) invert(84%) sepia(83%) saturate(720%) hue-rotate(351deg) brightness(103%) contrast(98%)',
+    Dark: 'brightness(0) saturate(100%) invert(25%) sepia(96%) saturate(3474%) hue-rotate(258deg) brightness(90%) contrast(107%)',
+    Bulwark: 'brightness(0) saturate(100%) invert(92%) sepia(4%) saturate(70%) hue-rotate(212deg) brightness(93%) contrast(89%)',
+    'Zone Debuff': 'brightness(0) saturate(100%) invert(92%) sepia(4%) saturate(70%) hue-rotate(212deg) brightness(93%) contrast(89%)',
+    Transformer: 'brightness(0) saturate(100%) invert(72%) sepia(3%) saturate(16%) hue-rotate(314deg) brightness(91%) contrast(88%)',
+    Greed: 'brightness(0) saturate(100%) invert(92%) sepia(4%) saturate(70%) hue-rotate(212deg) brightness(93%) contrast(89%)',
+    Shielded: 'brightness(0) saturate(100%) invert(69%) sepia(98%) saturate(1715%) hue-rotate(155deg) brightness(95%) contrast(102%)',
+    Summoner: 'brightness(0) saturate(100%) invert(31%) sepia(98%) saturate(4141%) hue-rotate(273deg) brightness(100%) contrast(104%)',
+    Burrowing: 'brightness(0) saturate(100%) invert(40%) sepia(43%) saturate(1257%) hue-rotate(344deg) brightness(90%) contrast(91%)',
+    Tartaros: 'brightness(0) saturate(100%) invert(72%) sepia(99%) saturate(1197%) hue-rotate(45deg) brightness(105%) contrast(106%)',
+    Momentum: 'brightness(0) saturate(100%) invert(43%) sepia(98%) saturate(1706%) hue-rotate(166deg) brightness(94%) contrast(101%)',
+    'Status Cleanse': 'brightness(0) saturate(100%) invert(92%) sepia(4%) saturate(70%) hue-rotate(212deg) brightness(93%) contrast(89%)',
+    Commander: 'brightness(0) saturate(100%) invert(84%) sepia(98%) saturate(1058%) hue-rotate(3deg) brightness(103%) contrast(101%)',
+    Stunner: 'brightness(0) saturate(100%) invert(92%) sepia(4%) saturate(70%) hue-rotate(212deg) brightness(93%) contrast(89%)',
+    Sword: 'brightness(0) saturate(100%) invert(69%) sepia(98%) saturate(1715%) hue-rotate(155deg) brightness(95%) contrast(102%)'
   };
-  const [ar, ag, ab] = hex(a);
-  const [br, bg, bb] = hex(b);
-  const mix = (x, y) => Math.round(x + (y - x) * amount);
-  return `rgb(${mix(ar, br)}, ${mix(ag, bg)}, ${mix(ab, bb)})`;
-}
-
-function tintLocalIcon(img) {
-  if (!img || img.dataset.tinted === 'true') return;
-
-  const apply = () => {
-    if (img.dataset.tinted === 'true' || !img.naturalWidth || !img.naturalHeight) return;
-
-    const size = Math.max(img.naturalWidth, img.naturalHeight);
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const x = (size - img.naturalWidth) / 2;
-    const y = (size - img.naturalHeight) / 2;
-    ctx.drawImage(img, x, y);
-
-    const base = getIconColor(img.dataset.iconName || '');
-    const light = mixHex(base, '#FFFFFF', 0.32);
-    const dark = mixHex(base, '#000000', 0.16);
-    const gradient = ctx.createLinearGradient(0, 0, size, size);
-    gradient.addColorStop(0, light);
-    gradient.addColorStop(0.48, base);
-    gradient.addColorStop(1, dark);
-
-    ctx.globalCompositeOperation = 'source-in';
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, size, size);
-
-    img.dataset.tinted = 'true';
-    img.style.filter = 'none';
-    img.src = canvas.toDataURL('image/png');
-  };
-
-  if (img.complete) apply();
-  else img.addEventListener('load', apply, { once: true });
+  return filters[String(name ?? '').trim()] || 'none';
 }
 
 function tintLocalIcons(root = document) {
-  root.querySelectorAll?.('.icon-image').forEach(tintLocalIcon);
+  root.querySelectorAll?.('.icon-image').forEach(img => {
+    const filter = getIconFilter(img.dataset.iconName || '');
+    img.style.filter = filter;
+    img.dataset.tinted = 'true';
+  });
 }
 
 const MODIFIER_COLORS = {
