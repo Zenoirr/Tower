@@ -56,9 +56,11 @@ function getIconColor(name) {
   return ICON_COLORS[normalizeName(name)] || '#A8B2C2';
 }
 
+const EMPTY_VALUES = new Set(['-', '--', '---', '—', 'none', 'n/a']);
+
 function cleanModifier(value) {
   const modifier = normalizeName(value);
-  return modifier === '-' || modifier.toLowerCase() === 'none' ? '' : modifier;
+  return EMPTY_VALUES.has(modifier.toLowerCase()) ? '' : modifier;
 }
 
 async function fetchTowerData() {

@@ -26,6 +26,34 @@ const stageFilterEl = $('#stageFilter');
 const resultCountEl = $('#resultCount');
 const clearSearchEl = $('#clearSearch');
 
+function animateCount(el, value) {
+  if (!el) return;
+  const end = Number(value);
+  if (!Number.isFinite(end)) { el.textContent = value; return; }
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { el.textContent = end; return; }
+
+  const start = 0;
+  const duration = 700;
+  const startTime = performance.now();
+
+  function tick(now) {
+    const progress = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(start + (end - start) * eased);
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(tick);
+}
+
+function renderSkeletons(count = 8) {
+  if (!listEl) return;
+  const cards = Array.from({ length: count }, (_, i) =>
+    `<div class="skeleton-card" style="--i:${i}"></div>`
+  ).join('');
+  listEl.innerHTML = `<div class="skeleton-list">${cards}</div>`;
+}
+
 function setStatus(type, text) {
   if (!statusEl) return;
   statusEl.className = `status ${type}`;
@@ -101,11 +129,11 @@ function loadoutHTML(floor) {
   return `<div class="loadout-card"><div class="loadout-image-wrap"><img src="${escapeHTML(loadout.image)}" alt="Loadout for Floor ${floor.floor}" loading="lazy"></div><div class="loadout-copy"><span class="section-label">LOADOUT</span><strong>${escapeHTML(loadout.title || 'Recommended loadout')}</strong>${loadout.note ? `<p>${escapeHTML(loadout.note)}</p>` : ''}</div></div>`;
 }
 
-function floorCard(floor) {
+function floorCard(floor, index = 0) {
   const modifier = cleanModifier(floor.modifier);
   const affinities = normalizeAffinityList(floor.affinities);
 
-  return `<article class="floor-card ${modifier ? 'has-modifier' : ''}" data-floor="${escapeHTML(floor.floor)}">
+  return `<article class="floor-card ${modifier ? 'has-modifier' : ''}" data-floor="${escapeHTML(floor.floor)}" style="--i:${Math.min(index, 24)}">
     <button class="floor-summary" type="button" aria-expanded="false">
       <span class="floor-number">${String(floor.floor).padStart(2, '0')}</span>
       <span class="stage-boss"><strong>${escapeHTML(displayValue(floor.stage))}</strong><small>${escapeHTML(displayValue(floor.boss))}</small></span>
@@ -158,7 +186,7 @@ function render() {
     sortAscending ? Number(a.floor) - Number(b.floor) : Number(b.floor) - Number(a.floor)
   );
 
-  listEl.innerHTML = ordered.map(floorCard).join('');
+  listEl.innerHTML = ordered.map((floor, index) => floorCard(floor, index)).join('');
   emptyEl.classList.toggle('hidden', ordered.length !== 0);
   resultCountEl.textContent = `${ordered.length} of ${floors.length} floors`;
   clearSearchEl.classList.toggle('hidden', !query);
@@ -187,12 +215,6 @@ function populateStageFilter() {
   );
 }
 
-function updateHomeStats() {
-  $('#homeFloorCount').textContent = floors.length;
-  $('#homeModifierCount').textContent = new Set(floors.map(f => cleanModifier(f.modifier)).filter(Boolean)).size;
-  $('#homeStageCount').textContent = new Set(floors.map(f => f.stage).filter(Boolean)).size;
-}
-
 function showPage(page) {
   const pages = { home: $('#homePage'), tower: $('#towerPage'), info: $('#infoPage') };
   Object.entries(pages).forEach(([key, el]) => el.classList.toggle('hidden', key !== page));
@@ -217,20 +239,30 @@ function handleRoute() {
   else showPage('home');
 }
 
+function updateHomeStatsAnimated() {
+  animateCount($('#homeFloorCount'), floors.length);
+  animateCount($('#homeModifierCount'), new Set(floors.map(f => cleanModifier(f.modifier)).filter(Boolean)).size);
+  animateCount($('#homeStageCount'), new Set(floors.map(f => f.stage).filter(Boolean)).size);
+}
+
 async function init() {
+  renderSkeletons();
+  resultCountEl.textContent = 'Loading...';
   try {
     setStatus('', 'Syncing');
     floors = await fetchTowerData();
     floors.sort((a, b) => Number(a.floor) - Number(b.floor));
-    countEl.textContent = floors.length;
-    updateHomeStats();
+    animateCount(countEl, floors.length);
+    updateHomeStatsAnimated();
     populateStageFilter();
     setStatus('online', 'Synchronized');
     render();
   } catch (error) {
     console.error(error);
     setStatus('error', 'API error');
-    listEl.innerHTML = `<div class="error-card"><strong>The Tower data could not be loaded.</strong><span>${escapeHTML(error.message)}</span><small>Check the Apps Script web app deployment and refresh the page.</small></div>`;
+    listEl.innerHTML = `<div class="error-card"><strong>The Tower data could not be loaded.</strong><span>${escapeHTML(error.message)}</span><small>Check the Apps Script web app deployment and refresh the page.</small><button class="small-button retry-button" id="retryFetch" type="button">↻ Try again</button></div>`;
+    $('#retryFetch')?.addEventListener('click', init);
+    resultCountEl.textContent = '0 of 0 floors';
     countEl.textContent = '—';
     $('#homeFloorCount').textContent = '—';
     $('#homeModifierCount').textContent = '—';
