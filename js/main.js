@@ -21,7 +21,6 @@ const statusEl = $('#apiStatus');
 const listEl = $('#towerList');
 const emptyEl = $('#emptyState');
 const searchEl = $('#searchInput');
-const countEl = $('#floorCount');
 const stageFilterEl = $('#stageFilter');
 const resultCountEl = $('#resultCount');
 const clearSearchEl = $('#clearSearch');
@@ -385,7 +384,6 @@ async function init() {
     floors = await fetchTowerData();
     floors = floors.filter(floor => Number.isInteger(Number(floor.floor)));
     floors.sort((a, b) => Number(a.floor) - Number(b.floor));
-    countEl.textContent = floors.length;
     updateHomeStatsAnimated();
     populateStageFilter();
     setStatus('online', 'Synchronized');
@@ -400,10 +398,10 @@ async function init() {
     listEl.innerHTML = `<div class="error-card"><strong>The Tower data could not be loaded.</strong><span>${escapeHTML(error.message)}</span><small>Check the Apps Script web app deployment and refresh the page.</small><button class="small-button retry-button" id="retryFetch" type="button">↻ Try again</button></div>`;
     $('#retryFetch')?.addEventListener('click', init);
     resultCountEl.textContent = '0 of 0 floors';
-    countEl.textContent = '—';
     $('#homeFloorCount') && ($('#homeFloorCount').textContent = '—');
     $('#homeModifierCount') && ($('#homeModifierCount').textContent = '—');
     $('#homeStageCount') && ($('#homeStageCount').textContent = '—');
+    if (countEl) countEl.textContent = '—';
   }
 }
 
