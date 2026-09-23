@@ -660,20 +660,13 @@ async function init() {
 // UPDATE LOG
 // Bump `id` any time you want the log to pop up again
 const UPDATE_LOG = {
-  id: 1,
+  id: 2,
   categories: {
-    Changes: [
-      { title: 'Hard Floors voting', description: 'Community voting for floors that are consistently marked as hard, with direct floor links and lighter floor interactions.' }
-    ],
+    Changes: [],
     Strategies: [
-      { title: 'New Strategies', description: '158(Tl)' },
-      { title: 'New Loadouts', description: '250, 276, 177(Tl), 158(Tl), 162(Tl)' }
+      { title: 'New Loadouts', description: '278, 283, 285, 288, 291, 295' }
     ],
-    Uis: [
-      { title: 'Bigger affinities', description: 'Affinity icons in the details panel no longer render smaller than resistances.' },
-      { title: 'Loadout image spacing', description: 'Loadout images no longer leave a large empty gap around them.' },
-      { title: 'Mobile', description: 'Fixed Mobile Issues.' }
-    ]
+    Uis: []
   }
 };
 
