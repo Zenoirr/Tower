@@ -41,8 +41,8 @@
   .summary-affinity .icon-image { width: 20px; height: 20px; flex-basis: 20px; }
   .details-grid { grid-template-columns: 1fr; }
   .info-panel { min-height: auto; }
-  .loadout-card { grid-template-columns: 1fr; }
-  .loadout-image-wrap { min-height: 260px; height: 390px; max-height: none; padding: 12px; }
+  .loadout-card { gap: 10px; }
+  .loadout-image-wrap { flex-basis: 100%; min-height: 0; height: auto; padding: 0; }
   .home-stats b { font-size: 22px; }
   .sync-line { flex-direction: column; }
   footer { flex-direction: column; }
@@ -92,8 +92,6 @@
 }
 
 @media (max-width: 1050px) {
-  .loadout-card { grid-template-columns: 1fr; }
-  .loadout-image-wrap img { max-height: 390px !important; }
   .loadout-copy { min-height: 0; }
 }
 

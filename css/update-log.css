@@ -41,6 +41,48 @@
 }
 .update-dialog h2 { margin-top: 9px; font-size: 28px; letter-spacing: -.7px; }
 .update-dialog p { margin-top: 10px; color: var(--muted); font-size: 15px; line-height: 1.65; }
+
+.update-log-body {
+  margin-top: 18px;
+  display: grid;
+  gap: 20px;
+  max-height: min(50vh, 420px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.update-category { display: grid; gap: 10px; }
+.update-category-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  color: #8278e8;
+  font: 700 10px 'JetBrains Mono', monospace;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+.update-category-title::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #7067e4;
+}
+.update-category[data-category="Changes"] .update-category-title { color: #58d6a4; }
+.update-category[data-category="Changes"] .update-category-title::before { background: #58d6a4; }
+.update-category[data-category="Strategies"] .update-category-title { color: #f2c14e; }
+.update-category[data-category="Strategies"] .update-category-title::before { background: #f2c14e; }
+.update-category[data-category="Uis"] .update-category-title { color: #6cb8ff; }
+.update-category[data-category="Uis"] .update-category-title::before { background: #6cb8ff; }
+.update-entry-list { display: grid; gap: 10px; }
+.update-entry {
+  border: 1px solid var(--line);
+  background: #15152a;
+  border-radius: 8px;
+  padding: 10px 13px;
+}
+.update-entry strong { display: block; font-size: 13px; color: var(--text); }
+.update-entry p { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.55; }
 .update-close {
   position: absolute;
   top: 12px;

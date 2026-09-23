@@ -637,26 +637,52 @@ async function init() {
   }
 }
 
+// ---------------------------------------------------------------------
+// UPDATE LOG
+// Bump `id` any time you want the log to pop up again
 const UPDATE_LOG = {
-  id: '1',
-  category: 'COMMUNITY',
-  version: 'V1',
-  title: 'Community features',
-  description: 'Hard Floors voting, direct floor links, strategy links and lighter floor interactions were added.'
+  id: 1,
+  categories: {
+    Changes: [
+      { title: 'Hard Floors voting', description: 'Community voting for floors that are consistently marked as hard, with direct floor links and lighter floor interactions.' }
+    ],
+    Strategies: [
+      { title: 'New Strategies', description: '158(Tl)' },
+      { title: 'New Loadouts', description: '250, 276, 177(Tl), 158(Tl), 162(Tl)' }
+    ],
+    Uis: [
+      { title: 'Bigger affinities', description: 'Affinity icons in the details panel no longer render smaller than resistances.' },
+      { title: 'Loadout image spacing', description: 'Loadout images no longer leave a large empty gap around them.' },
+      { title: 'Mobile', description: 'Fixed Mobile Issues.' }
+    ]
+  }
 };
+
+const UPDATE_LOG_CATEGORIES = ['Changes', 'Strategies', 'Uis'];
 
 function closeUpdateLog() {
   $('#updateModal')?.classList.add('hidden');
   try { localStorage.setItem(`towerOfGoyUpdateSeen:${UPDATE_LOG.id}`, '1'); } catch (_) {}
 }
 
+function renderUpdateLogBody() {
+  const body = $('#updateLogBody');
+  if (!body) return;
+
+  const sections = UPDATE_LOG_CATEGORIES.map(category => {
+    const entries = UPDATE_LOG.categories?.[category] || [];
+    if (!entries.length) return '';
+    const items = entries.map(entry => `<div class="update-entry"><strong>${escapeHTML(entry.title)}</strong><p>${escapeHTML(entry.description)}</p></div>`).join('');
+    return `<section class="update-category" data-category="${escapeHTML(category)}"><span class="update-category-title">${escapeHTML(category)}</span><div class="update-entry-list">${items}</div></section>`;
+  }).join('');
+
+  body.innerHTML = sections || '<p class="muted">No updates in this release.</p>';
+}
+
 function openUpdateLog() {
-  const title = $('#updateModalTitle');
-  const text = $('#updateModalText');
-  const category = $('#updateModalCategory');
-  if (title) title.textContent = `${UPDATE_LOG.version} · ${UPDATE_LOG.title}`;
-  if (text) text.textContent = UPDATE_LOG.description;
-  if (category) category.textContent = UPDATE_LOG.category;
+  const kicker = $('#updateModalKicker');
+  if (kicker) kicker.textContent = `UPDATE #${UPDATE_LOG.id}`;
+  renderUpdateLogBody();
   $('#updateModal')?.classList.remove('hidden');
 }
 
