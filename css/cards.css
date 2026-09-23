@@ -236,7 +236,7 @@
 .affinity-item b { color: var(--data-color, #f4f1ff); }
 
 .loadout-section {
-  padding: 16px 0 0;
+  padding: 18px 20px 22px;
   background: transparent;
 }
 .loadout-card {
@@ -456,8 +456,8 @@
   background: rgba(223,61,78,.18);
 }
 @media (max-width: 760px) {
-  .floor-share-row { justify-content: stretch; }
-  .share-floor-button { width: 100%; }
+  .loadout-actions-row { justify-content: stretch; }
+  .copy-floor-inline { width: 100%; }
 }
 
 /* Compact community tools live beside the loadout instead of taking a full-width row. */
@@ -470,7 +470,6 @@
 .hard-vote-compact em { font-size: 9px; }
 .loadout-community-fallback { display: grid; gap: 10px; margin-top: 14px; }
 .loadout-community-fallback .strategy-section { margin-top: 0; }
-.loadout-community-fallback .hard-vote-button { justify-self: start; }
 
 
 /* Final community/layout pass */
@@ -549,39 +548,26 @@
 .hard-vote-button.is-loading { opacity: .6; pointer-events: none; }
 .loadout-community { display: grid; gap: 10px; margin-top: 16px; }
 .loadout-community .strategy-section { margin-top: 0; }
-.loadout-community .hard-vote-button { justify-self: start; }
-.loadout-community-fallback { display: grid; gap: 10px; margin-top: 14px; padding: 0 12px 14px; }
+.loadout-community-fallback { display: grid; gap: 10px; margin-top: 14px; padding: 0 0 4px; }
 
-.floor-share-row {
+.loadout-actions-row {
   display: flex;
-  justify-content: center;
-  padding: 14px 16px;
-  margin-top: 4px;
-  border-top: 1px solid var(--line);
-  background: #0f0f1e;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
 }
-.share-floor-button {
-  width: auto;
-  min-width: 240px;
+.copy-floor-inline {
+  width: fit-content;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-radius: 8px;
-  border: 1px solid var(--line-strong);
-  background: #1a1a36;
-  color: #ece9fb;
-  font-size: 12.5px;
-  font-weight: 800;
-  letter-spacing: .2px;
-}
-.share-floor-button:hover {
-  border-color: #6b61cf;
-  background: #232052;
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px -12px rgba(88,79,208,.7);
+  gap: 5px;
+  margin-left: auto;
 }
 
 @media (max-width: 760px) {
@@ -636,13 +622,13 @@
   .resistance-list, .affinity-list { grid-template-columns: 1fr; }
   .resistance-list .resistance-item, .affinity-item { min-height: 52px; }
 
-  .loadout-section { padding-top: 12px; }
+  .loadout-section { padding: 12px 14px 16px; }
   .loadout-card { gap: 10px; }
   .loadout-image-wrap { flex-basis: 100%; min-height: 0; height: auto; padding: 0; }
   .loadout-image-wrap img { width: 100%; max-width: 100%; height: auto; object-fit: contain; }
   .loadout-copy { flex-basis: 100%; padding: 4px 0 14px; }
   .loadout-community { margin-top: 12px; }
   .hard-vote-button { min-height: 32px; padding: 6px 9px; }
-  .floor-share-row { justify-content: stretch; padding: 12px 12px; }
-  .share-floor-button { width: 100%; min-width: 0; }
+  .loadout-actions-row { justify-content: stretch; }
+  .copy-floor-inline { width: 100%; margin-left: 0; justify-content: center; }
 }

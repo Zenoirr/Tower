@@ -1,6 +1,9 @@
 // ---------------------------------------------------------------------
-// Community suggestions
-// pls dont spam my webhook :c
+// Community suggestions: "Suggest Loadout" and "Suggest Strategy/Video"
+// Sends the submitted data straight to a Discord webhook.
+// NOTE: this webhook URL is visible to anyone viewing the page source.
+// The 1-per-minute limit below is a client-side courtesy limit only
+// (stored in localStorage) and is not a real security measure.
 const SUGGESTIONS_WEBHOOK_URL = 'https://discord.com/api/webhooks/1552140008906031104/OgajCkdRqfLCU5SJ-cyLszaMzVf5tT-czXrbXqaM-Hu6QL65yXoWeY-zu94CWtNLdJgG';
 const SUGGESTION_RATE_LIMIT_MS = 60000;
 const SUGGESTION_RATE_KEY = 'towerOfGoySuggestionLastSent:v1';
