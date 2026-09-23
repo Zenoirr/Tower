@@ -217,6 +217,13 @@ function strategyHTML(floor) {
   </section>`;
 }
 
+function suggestStrategyButtonHTML(floor) {
+  const item = strategies[String(floor.floor)] || {};
+  const hasStrategy = Boolean(String(item.text || '').trim() || String(item.video || '').trim());
+  if (hasStrategy) return '';
+  return `<button type="button" class="suggest-button" data-suggest-strategy="${escapeHTML(floor.floor)}">+ Suggest strategy or video</button>`;
+}
+
 function hardVoteHTML(floor) {
   const floorNumber = Number(floor.floor);
   const votes = getHardVotes(floorNumber);
@@ -234,7 +241,7 @@ function loadoutHTML(floor) {
   const traitlessExists = loadoutStatus.get(loadoutKey(floorNumber, 'traitless')) === true;
 
   if (!traitExists && !traitlessExists) {
-    return `<div class="loadout-empty"><div class="loadout-empty-icon">—</div><div><strong>No Loadout Detected.</strong><span>There is no loadout image available for this floor.</span></div></div>`;
+    return `<div class="loadout-empty"><div class="loadout-empty-icon">—</div><div><strong>No Loadout Detected.</strong><span>There is no loadout image available for this floor.</span></div><button type="button" class="suggest-button" data-suggest-loadout="${escapeHTML(floorNumber)}">+ Suggest Loadout</button></div>`;
   }
 
   const activeType = traitExists ? 'trait' : 'traitless';
@@ -251,7 +258,7 @@ function loadoutHTML(floor) {
       ${tabs}
       <span class="section-label">LOADOUT</span>
       <strong class="loadout-title">${escapeHTML(activeLoadout.title)}</strong>
-      <div class="loadout-community">${strategyHTML(floor)}${hardVoteHTML(floor)}</div>
+      <div class="loadout-community">${strategyHTML(floor) || suggestStrategyButtonHTML(floor)}${hardVoteHTML(floor)}</div>
     </div>
   </div>`;
 }
@@ -287,14 +294,14 @@ function floorDetails(floor) {
       <section class="info-panel"><div class="panel-title"><span>02</span><strong>HP</strong></div><div class="hp-row hp-row-boss"><span>Base HP</span><b class="boss-hp-value">${hpHTML(floor.bossHP?.base, modifier)}</b></div><div class="hp-row hp-row-boss"><span>Actual HP</span><b class="boss-hp-value">${hpHTML(floor.bossHP?.actual, modifier)}</b></div><div class="hp-row hp-row-enemy"><span>Enemy Wave 1</span><b class="enemy-hp-value">${escapeHTML(displayValue(floor.enemyHP))}</b></div></section>
       <section class="info-panel"><div class="panel-title"><span>03</span><strong>Resistances</strong></div><div class="resistance-list">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</div></section>
       <section class="info-panel affinity-panel"><div class="panel-title"><span>04</span><strong>Affinities</strong></div><div class="affinity-list">${affinities.length ? affinities.map(affinityHTML).join('') : '<span class="muted-value">No affinities listed.</span>'}</div></section>
-    </div><div class="loadout-section">${loadoutHTML(floor)}${(!hasAnyLoadout(floor.floor) && (strategyHTML(floor) || hardVoteHTML(floor))) ? `<div class="loadout-community-fallback">${strategyHTML(floor)}${hardVoteHTML(floor)}</div>` : ''}</div><div class="floor-share-row"><button type="button" class="small-button share-floor-button" data-copy-floor="${escapeHTML(floor.floor)}">🔗 Copy Floor Link</button></div></div></div>`;
+    </div><div class="loadout-section">${loadoutHTML(floor)}${!hasAnyLoadout(floor.floor) ? `<div class="loadout-community-fallback">${strategyHTML(floor) || suggestStrategyButtonHTML(floor)}${hardVoteHTML(floor)}</div>` : ''}</div><div class="floor-share-row"><button type="button" class="small-button share-floor-button" data-copy-floor="${escapeHTML(floor.floor)}">🔗 Copy Floor Link</button></div></div></div>`;
 }
 
 function refreshVisibleLoadouts() {
   $$('.floor-card').forEach(card => {
     const floor = floors.find(item => String(item.floor) === card.dataset.floor);
     const section = card.querySelector('.loadout-section');
-    if (floor && section) { section.outerHTML = `<div class="loadout-section">${loadoutHTML(floor)}</div>`; bindLoadoutTabs(card); }
+    if (floor && section) { section.outerHTML = `<div class="loadout-section">${loadoutHTML(floor)}</div>`; bindLoadoutTabs(card); bindSuggestButtons(card); }
   });
 }
 
@@ -366,6 +373,7 @@ function render() {
   bindLoadoutTabs(listEl);
   bindHardVoteButtons(listEl);
   bindShareButtons(listEl);
+  bindSuggestButtons(listEl);
   emptyEl.classList.toggle('hidden', ordered.length !== 0);
   const emptyStrong = emptyEl.querySelector('strong');
   const emptySpan = emptyEl.querySelector('span');
@@ -396,6 +404,7 @@ function render() {
         bindLoadoutTabs(host);
         bindHardVoteButtons(host);
         bindShareButtons(host);
+        bindSuggestButtons(host);
       }
     }
   }));

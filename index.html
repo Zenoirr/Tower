@@ -24,9 +24,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=18">
-  <link rel="stylesheet" href="css/cards.css?v=18">
+  <link rel="stylesheet" href="css/cards.css?v=19">
   <link rel="stylesheet" href="css/responsive.css?v=18">
-  <link rel="stylesheet" href="css/update-log.css?v=18">
+  <link rel="stylesheet" href="css/update-log.css?v=19">
+  <link rel="stylesheet" href="css/suggestions.css?v=1">
 </head>
 <body>
   <div class="site-bg"></div>
@@ -54,6 +55,21 @@
         <h2 id="updateModalTitle">What's new</h2>
         <div class="update-log-body" id="updateLogBody"></div>
         <button class="update-ok" id="updateOk" type="button">OK</button>
+      </div>
+    </div>
+
+    <div class="suggest-modal hidden" id="suggestModal" role="dialog" aria-modal="true" aria-labelledby="suggestModalTitle">
+      <div class="suggest-backdrop"></div>
+      <div class="suggest-dialog">
+        <button class="suggest-close" id="suggestClose" type="button" aria-label="Close suggestion form">×</button>
+        <span class="section-kicker" id="suggestModalKicker">SUGGESTION</span>
+        <h2 id="suggestModalTitle">Suggest</h2>
+        <p class="suggest-subtitle" id="suggestModalSubtitle"></p>
+        <form id="suggestForm" class="suggest-form">
+          <div id="suggestFormFields"></div>
+          <div id="suggestFormStatus" class="suggest-status" aria-live="polite"></div>
+          <button type="submit" id="suggestSubmit">Send suggestion</button>
+        </form>
       </div>
     </div>
 
@@ -197,6 +213,7 @@
   <script src="js/loadouts.js?v=18"></script>
   <script src="js/sheets.js?v=18"></script>
   <script src="js/votes.js?v=2"></script>
-  <script src="js/main.js?v=18"></script>
+  <script src="js/suggestions.js?v=1"></script>
+  <script src="js/main.js?v=19"></script>
 </body>
 </html>
