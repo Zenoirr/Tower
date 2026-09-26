@@ -196,6 +196,7 @@ footer strong { color: #8379e8; }
 .retry-button { margin-top: 6px; }
 
 .skeleton-list { display: grid; gap: 5px; }
+.skeleton-message { margin: 0 0 12px; padding: 10px 14px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); font: 700 11px 'JetBrains Mono', monospace; letter-spacing: .3px; text-align: center; border-radius: 6px; }
 .skeleton-card { height: 70px; border: 1px solid var(--line); background: linear-gradient(100deg, #121225 30%, #191938 50%, #121225 70%); background-size: 220% 100%; opacity: 0; animation: shimmer 1.6s ease-in-out infinite, fade-in .4s ease calc(var(--i, 0) * 60ms) forwards; }
 @keyframes shimmer { 0% { background-position: 140% 0; } 100% { background-position: -40% 0; } }
 

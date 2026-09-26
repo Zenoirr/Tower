@@ -108,8 +108,8 @@ function fetchTowerDataJSONP() {
         } catch (error) {
           lastError = error;
           finish(() => {
-            if (attempt < 2) {
-              setTimeout(runAttempt, 500);
+            if (attempt < 3) {
+              setTimeout(runAttempt, 400);
             } else {
               reject(error);
             }
@@ -120,8 +120,8 @@ function fetchTowerDataJSONP() {
       script.onerror = () => {
         lastError = new Error('Could not load the Apps Script Web App.');
         finish(() => {
-          if (attempt < 2) {
-            setTimeout(runAttempt, 500);
+          if (attempt < 3) {
+            setTimeout(runAttempt, 400);
           } else {
             reject(new Error('Could not load the Apps Script Web App. Check the /exec URL and deployment permissions.'));
           }
@@ -132,13 +132,13 @@ function fetchTowerDataJSONP() {
         const timeoutError = new Error('The Apps Script API did not return data within the allowed time.');
         lastError = timeoutError;
         finish(() => {
-          if (attempt < 2) {
-            setTimeout(runAttempt, 500);
+          if (attempt < 3) {
+            setTimeout(runAttempt, 400);
           } else {
             reject(lastError || timeoutError);
           }
         });
-      }, 60000);
+      }, 18000);
 
       const separator = SHEETS_API_URL.includes('?') ? '&' : '?';
       script.src = `${SHEETS_API_URL}${separator}callback=${encodeURIComponent(callbackName)}&_=${Date.now()}`;

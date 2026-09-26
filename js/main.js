@@ -4,6 +4,7 @@ let activeStage = 'all';
 let sortAscending = true;
 let strategies = {};
 const HARD_VOTE_THRESHOLD = 5;
+const FLOORS_CACHE_KEY = 'towerOfGoyFloorsCache:v1';
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -48,12 +49,35 @@ function animateCount(el, value) {
   requestAnimationFrame(tick);
 }
 
-function renderSkeletons(count = 8) {
+function renderSkeletons(count = 8, message = 'Loading tower data...') {
   if (!listEl) return;
+  clearTimeout(renderSkeletons._msgTimer);
   const cards = Array.from({ length: count }, (_, i) =>
     `<div class="skeleton-card" style="--i:${i}"></div>`
   ).join('');
-  listEl.innerHTML = `<div class="skeleton-list">${cards}</div>`;
+  listEl.innerHTML = `<div class="skeleton-list"><p class="skeleton-message" id="skeletonMessage">${escapeHTML(message)}</p>${cards}</div>`;
+  renderSkeletons._msgTimer = setTimeout(() => {
+    const msgEl = $('#skeletonMessage');
+    if (msgEl) msgEl.textContent = 'Still loading — the community database can be slow to wake up. Hang tight...';
+  }, 6000);
+}
+
+function loadCachedFloors() {
+  try {
+    const raw = localStorage.getItem(FLOORS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.floors) || !parsed.floors.length) return null;
+    return parsed;
+  } catch (_) {
+    return null;
+  }
+}
+
+function saveCachedFloors(floorsList) {
+  try {
+    localStorage.setItem(FLOORS_CACHE_KEY, JSON.stringify({ floors: floorsList, savedAt: Date.now() }));
+  } catch (_) {}
 }
 
 function setStatus(type, text) {
@@ -619,14 +643,29 @@ function startVotesRefresh() {
 }
 
 async function init() {
-  renderSkeletons();
-  resultCountEl.textContent = 'Loading...';
-  try {
-    setStatus('', 'Syncing');
-    await loadStrategies();
-    floors = await fetchTowerData();
-    floors = floors.filter(floor => Number.isInteger(Number(floor.floor)));
+  const cached = loadCachedFloors();
+
+  if (cached) {
+    floors = cached.floors.filter(floor => Number.isInteger(Number(floor.floor)));
     floors.sort((a, b) => Number(a.floor) - Number(b.floor));
+    if (countEl) countEl.textContent = floors.length;
+    updateHomeStatsAnimated();
+    populateStageFilter();
+    setStatus('', 'Showing cached data — syncing...');
+    render();
+    handleRoute();
+  } else {
+    renderSkeletons(8, 'Loading tower data — first load can take a few seconds...');
+    resultCountEl.textContent = 'Loading...';
+    setStatus('', 'Syncing');
+  }
+
+  try {
+    const [, freshFloors] = await Promise.all([loadStrategies(), fetchTowerData()]);
+    floors = freshFloors.filter(floor => Number.isInteger(Number(floor.floor)));
+    floors.sort((a, b) => Number(a.floor) - Number(b.floor));
+    saveCachedFloors(floors);
+
     if (countEl) countEl.textContent = floors.length;
     updateHomeStatsAnimated();
     populateStageFilter();
@@ -645,56 +684,117 @@ async function init() {
     });
   } catch (error) {
     console.error(error);
-    setStatus('error', 'API error');
-    listEl.innerHTML = `<div class="error-card"><strong>The Tower data could not be loaded.</strong><span>${escapeHTML(error.message)}</span><small>Check the Apps Script web app deployment and refresh the page.</small><button class="small-button retry-button" id="retryFetch" type="button">↻ Try again</button></div>`;
-    $('#retryFetch')?.addEventListener('click', init);
-    resultCountEl.textContent = '0 of 0 floors';
-    if (countEl) countEl.textContent = '—';
-    $('#homeFloorCount') && ($('#homeFloorCount').textContent = '—');
-    $('#homeModifierCount') && ($('#homeModifierCount').textContent = '—');
-    $('#homeStageCount') && ($('#homeStageCount').textContent = '—');
+    if (cached) {
+      // Keep showing the cached list — just flag that the refresh failed.
+      setStatus('error', 'Could not refresh — showing cached data');
+    } else {
+      setStatus('error', 'API error');
+      listEl.innerHTML = `<div class="error-card"><strong>The Tower data could not be loaded.</strong><span>${escapeHTML(error.message)}</span><small>Check the Apps Script web app deployment and refresh the page.</small><button class="small-button retry-button" id="retryFetch" type="button">↻ Try again</button></div>`;
+      $('#retryFetch')?.addEventListener('click', init);
+      resultCountEl.textContent = '0 of 0 floors';
+      if (countEl) countEl.textContent = '—';
+      $('#homeFloorCount') && ($('#homeFloorCount').textContent = '—');
+      $('#homeModifierCount') && ($('#homeModifierCount').textContent = '—');
+      $('#homeStageCount') && ($('#homeStageCount').textContent = '—');
+    }
   }
 }
 
 // ---------------------------------------------------------------------
 // UPDATE LOG
-// Bump `id` any time you want the log to pop up again
-const UPDATE_LOG = {
-  id: 2,
-  categories: {
-    Changes: [],
-    Strategies: [
-      { title: 'New Loadouts', description: '278, 283, 285, 288, 291, 295' }
-    ],
-    Uis: []
+// Newest first. Only the last 3 are kept/shown via the Versions button.
+// Add a new entry at the top (with a new `id`) any time you want the log
+// to pop up again for everyone.
+const UPDATE_LOG_HISTORY = [
+  {
+    id: 3,
+    categories: {
+      Changes: [
+        { title: 'Community suggestions', description: 'Added "Suggest Loadout" and "Suggest strategy or video" buttons on floors that are missing them. Submissions go straight to our Discord for review.' }
+      ],
+      Strategies: [],
+      Uis: [
+        { title: 'Loadout layout', description: 'Fixed the empty space next to loadout images — the image and text now line up properly instead of leaving a big gap.' },
+        { title: 'Copy Floor Link', description: 'Moved next to Vote Hard and made smaller, instead of a big button stuck in the corner.' },
+        { title: 'Resistances alignment', description: 'Resistance values are now centered and stacked, matching how affinities are displayed.' },
+        { title: 'Update log', description: 'No longer scrolls internally, and you can now browse the last 3 versions with the Versions button below.' }
+      ]
+    }
+  },
+  {
+    id: 2,
+    categories: {
+      Changes: [],
+      Strategies: [
+        { title: 'New Loadouts', description: '278, 283, 285, 288, 291, 295' }
+      ],
+      Uis: []
+    }
+  },
+  {
+    id: 1,
+    categories: {
+      Changes: [
+        { title: 'Hard Floors voting', description: 'Community voting for floors that are consistently marked as hard, with direct floor links and lighter floor interactions.' }
+      ],
+      Strategies: [
+        { title: 'New Strategies', description: '158(TI)' },
+        { title: 'New Loadouts', description: '250, 276, 177(TI), 158(TI), 162(TI)' }
+      ],
+      Uis: [
+        { title: 'Bigger affinities', description: 'Affinity icons in the details panel no longer render smaller than resistances.' }
+      ]
+    }
   }
-};
+];
 
+const UPDATE_LOG = UPDATE_LOG_HISTORY[0]; // latest — kept for back-compat with anything referencing it directly
 const UPDATE_LOG_CATEGORIES = ['Changes', 'Strategies', 'Uis'];
+let activeUpdateLogId = UPDATE_LOG.id;
+
+function getUpdateLogEntry(id) {
+  return UPDATE_LOG_HISTORY.find(entry => entry.id === id) || UPDATE_LOG_HISTORY[0];
+}
 
 function closeUpdateLog() {
   $('#updateModal')?.classList.add('hidden');
   try { localStorage.setItem(`towerOfGoyUpdateSeen:${UPDATE_LOG.id}`, '1'); } catch (_) {}
 }
 
-function renderUpdateLogBody() {
+function renderUpdateVersionList() {
+  const list = $('#updateVersionList');
+  if (!list) return;
+  list.innerHTML = UPDATE_LOG_HISTORY.map(entry => {
+    const isLatest = entry.id === UPDATE_LOG_HISTORY[0].id;
+    const isActive = entry.id === activeUpdateLogId;
+    return `<button type="button" class="update-version-pill${isActive ? ' active' : ''}" data-version-id="${entry.id}">#${entry.id}${isLatest ? ' · Latest' : ''}</button>`;
+  }).join('');
+}
+
+function renderUpdateLogBody(id = activeUpdateLogId) {
   const body = $('#updateLogBody');
   if (!body) return;
 
+  const log = getUpdateLogEntry(id);
+  activeUpdateLogId = log.id;
+
+  const kicker = $('#updateModalKicker');
+  if (kicker) kicker.textContent = `UPDATE #${log.id}`;
+
   const sections = UPDATE_LOG_CATEGORIES.map(category => {
-    const entries = UPDATE_LOG.categories?.[category] || [];
+    const entries = log.categories?.[category] || [];
     if (!entries.length) return '';
     const items = entries.map(entry => `<div class="update-entry"><strong>${escapeHTML(entry.title)}</strong><p>${escapeHTML(entry.description)}</p></div>`).join('');
     return `<section class="update-category" data-category="${escapeHTML(category)}"><span class="update-category-title">${escapeHTML(category)}</span><div class="update-entry-list">${items}</div></section>`;
   }).join('');
 
   body.innerHTML = sections || '<p class="muted">No updates in this release.</p>';
+  renderUpdateVersionList();
 }
 
 function openUpdateLog() {
-  const kicker = $('#updateModalKicker');
-  if (kicker) kicker.textContent = `UPDATE #${UPDATE_LOG.id}`;
-  renderUpdateLogBody();
+  activeUpdateLogId = UPDATE_LOG_HISTORY[0].id;
+  renderUpdateLogBody(activeUpdateLogId);
   $('#updateModal')?.classList.remove('hidden');
 }
 
@@ -703,6 +803,14 @@ function setupUpdateLog() {
   $('#updateOk')?.addEventListener('click', closeUpdateLog);
   $('#updateClose')?.addEventListener('click', closeUpdateLog);
   $('.update-backdrop')?.addEventListener('click', closeUpdateLog);
+  $('#updateVersionsToggle')?.addEventListener('click', () => {
+    $('#updateVersionList')?.classList.toggle('hidden');
+  });
+  $('#updateVersionList')?.addEventListener('click', event => {
+    const button = event.target.closest('[data-version-id]');
+    if (!button) return;
+    renderUpdateLogBody(Number(button.dataset.versionId));
+  });
   window.addEventListener('keydown', event => {
     if (event.key === 'Escape' && !$('#updateModal')?.classList.contains('hidden')) closeUpdateLog();
   });
