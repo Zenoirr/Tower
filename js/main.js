@@ -5,6 +5,13 @@ let sortAscending = true;
 let strategies = {};
 const HARD_VOTE_THRESHOLD = 5;
 const FLOORS_CACHE_KEY = 'towerOfGoyFloorsCache:v1';
+const CLEARED_FLOORS_KEY = 'towerOfGoyClearedFloors:v1';
+
+let clearedFloors = new Set();
+try {
+  const rawCleared = localStorage.getItem(CLEARED_FLOORS_KEY);
+  if (rawCleared) JSON.parse(rawCleared).forEach(f => clearedFloors.add(String(f)));
+} catch (_) {}
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -261,6 +268,167 @@ function hardVoteHTML(floor) {
   </button>`;
 }
 
+// ---------------------------------------------------------------------
+// FLOOR CLEARED TRACKER
+function isFloorCleared(floor) {
+  return clearedFloors.has(String(floor));
+}
+
+function saveClearedFloors() {
+  try { localStorage.setItem(CLEARED_FLOORS_KEY, JSON.stringify([...clearedFloors])); } catch (_) {}
+}
+
+function toggleFloorCleared(floor) {
+  const key = String(floor);
+  if (clearedFloors.has(key)) clearedFloors.delete(key); else clearedFloors.add(key);
+  saveClearedFloors();
+  updateClearedProgress();
+}
+
+function clearedToggleHTML(floor) {
+  const cleared = isFloorCleared(floor);
+  return `<button type="button" class="hard-vote-button hard-vote-compact cleared-toggle-button ${cleared ? 'cleared' : ''}" data-cleared-toggle="${escapeHTML(floor)}" aria-pressed="${cleared}">
+    <span>${cleared ? '✓' : '○'}</span><b>${cleared ? 'Cleared' : 'Mark Cleared'}</b>
+  </button>`;
+}
+
+function updateClearedProgress() {
+  const fillEl = $('#clearedProgressFill');
+  const textEl = $('#clearedProgressText');
+  if (!textEl) return;
+  const total = floors.length;
+  const done = floors.filter(f => isFloorCleared(f.floor)).length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  if (fillEl) fillEl.style.width = `${pct}%`;
+  textEl.textContent = total ? `${done} / ${total} floors cleared (${pct}%)` : '0 / 0 floors cleared';
+}
+
+function bindClearedButtons(scope = document) {
+  scope.querySelectorAll('[data-cleared-toggle]').forEach(button => {
+    if (button.dataset.bound === '1') return;
+    button.dataset.bound = '1';
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      const floor = button.dataset.clearedToggle;
+      toggleFloorCleared(floor);
+      const cleared = isFloorCleared(floor);
+      button.classList.toggle('cleared', cleared);
+      button.setAttribute('aria-pressed', String(cleared));
+      const iconSpan = button.querySelector('span');
+      const labelB = button.querySelector('b');
+      if (iconSpan) iconSpan.textContent = cleared ? '✓' : '○';
+      if (labelB) labelB.textContent = cleared ? 'Cleared' : 'Mark Cleared';
+
+      const card = button.closest('.floor-card');
+      if (card) {
+        card.classList.toggle('is-cleared', cleared);
+        const numberEl = card.querySelector('.floor-number');
+        const badge = numberEl?.querySelector('.cleared-check-badge');
+        if (cleared && numberEl && !badge) {
+          numberEl.insertAdjacentHTML('beforeend', '<small class="cleared-check-badge">✓ CLEARED</small>');
+        } else if (!cleared && badge) {
+          badge.remove();
+        }
+      }
+    });
+  });
+}
+
+// ---------------------------------------------------------------------
+// COUNTER CALCULATOR
+// Shows only the combinations that can exist on this floor.
+// Damage multiplier = archetype resistance × elemental affinity.
+const COUNTER_ARCHETYPES = ['Magical', 'Physical'];
+
+function parseMultiplier(value) {
+  const clean = String(value ?? '').trim().replace(',', '.');
+  const match = clean.match(/-?\d+(?:\.\d+)?/);
+  if (!match) return null;
+  const num = parseFloat(match[0]);
+  return Number.isFinite(num) ? num : null;
+}
+
+function counterCalculatorHTML(floor) {
+  const affinities = normalizeAffinityList(floor.affinities);
+  const resistanceEntries = COUNTER_ARCHETYPES
+    .map(name => ({
+      name,
+      value: parseMultiplier(name === 'Magical' ? floor.resistances?.magical : floor.resistances?.physical)
+    }))
+    .filter(item => item.value !== null);
+
+  const combinations = [];
+  for (const archetype of resistanceEntries) {
+    for (const affinity of affinities) {
+      const affinityValue = parseMultiplier(affinity.value);
+      if (affinityValue === null) continue;
+      combinations.push({
+        archetype: archetype.name,
+        archetypeValue: archetype.value,
+        element: displayElementName(affinity.element),
+        elementValue: affinityValue,
+        rawElement: affinity.element
+      });
+    }
+  }
+
+  const items = combinations.map(item => {
+    const total = item.archetypeValue * item.elementValue;
+    const totalText = `${total.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')}x`;
+    return `<button type="button" class="counter-combo" aria-label="${escapeHTML(item.archetype)} plus ${escapeHTML(item.element)} equals ${escapeHTML(totalText)}">
+      <span class="counter-combo-icon">${iconHTML('archetypes', item.archetype)}</span>
+      <span class="counter-combo-plus">+</span>
+      <span class="counter-combo-icon">${iconHTML('elements', item.rawElement)}</span>
+      <b>${escapeHTML(totalText)}</b>
+    </button>`;
+  }).join('');
+
+  if (!items) return '';
+
+  return `<div class="counter-calculator" data-counter-floor="${escapeHTML(floor.floor)}">
+    <button type="button" class="small-button calculator-button" data-calculator-toggle aria-expanded="false">
+      Calculator
+    </button>
+    <div class="counter-calculator-popup hidden" role="dialog" aria-label="Damage calculator">
+      <div class="counter-calculator-grid">${items}</div>
+    </div>
+  </div>`;
+}
+
+function bindCounterCalculators(scope = document) {
+  scope.querySelectorAll('.counter-calculator').forEach(wrapper => {
+    if (wrapper.dataset.bound === '1') return;
+    wrapper.dataset.bound = '1';
+    const toggle = wrapper.querySelector('[data-calculator-toggle]');
+    const popup = wrapper.querySelector('.counter-calculator-popup');
+    if (!toggle || !popup) return;
+
+    toggle.addEventListener('click', event => {
+      event.stopPropagation();
+      const willOpen = popup.classList.contains('hidden');
+      scope.querySelectorAll('.counter-calculator-popup').forEach(item => item.classList.add('hidden'));
+      scope.querySelectorAll('[data-calculator-toggle]').forEach(item => item.setAttribute('aria-expanded', 'false'));
+      popup.classList.toggle('hidden', !willOpen);
+      toggle.setAttribute('aria-expanded', String(willOpen));
+    });
+
+    popup.addEventListener('click', event => event.stopPropagation());
+  });
+}
+
+function communityActionsHTML(floor) {
+  return `<div class="loadout-actions-row">
+    <div class="loadout-action-left">
+      ${hardVoteHTML(floor)}
+      ${clearedToggleHTML(floor.floor)}
+    </div>
+    <div class="loadout-action-right">
+      ${counterCalculatorHTML(floor)}
+      ${copyFloorLinkHTML(floor.floor)}
+    </div>
+  </div>`;
+}
+
 function loadoutHTML(floor) {
   const floorNumber = Number(floor.floor);
   const trait = getLoadout(floorNumber, 'trait');
@@ -288,7 +456,7 @@ function loadoutHTML(floor) {
       <strong class="loadout-title">${escapeHTML(activeLoadout.title)}</strong>
       <div class="loadout-community">
         ${strategyHTML(floor) || suggestStrategyButtonHTML(floor)}
-        <div class="loadout-actions-row">${hardVoteHTML(floor)}${copyFloorLinkHTML(floor.floor)}</div>
+        ${communityActionsHTML(floor)}
       </div>
     </div>
   </div>`;
@@ -299,12 +467,13 @@ function floorSummary(floor) {
   const affinities = normalizeAffinityList(floor.affinities);
   const hardVotes = getHardVotes(floor.floor);
   const isHard = hardVotes >= HARD_VOTE_THRESHOLD;
+  const cleared = isFloorCleared(floor.floor);
   const summaryAffinities = affinities.length
     ? affinities.map(item => `<span class="summary-affinity" style="--data-color:${escapeHTML(getIconColor(item.element))}">${iconHTML('elements', item.element)}<span style="color:${escapeHTML(getIconColor(item.element))}">${escapeHTML(displayElementName(item.element))}</span><b style="color:${escapeHTML(getIconColor(item.element))}">${escapeHTML(item.value)}</b></span>`).join('')
     : '<span class="muted-value">---</span>';
 
   return `<button class="floor-summary" type="button" aria-expanded="false">
-      <span class="floor-number ${isHard ? 'is-hard' : ''}"><b>${String(floor.floor).padStart(2, '0')}</b>${isHard ? '<small class="hard-badge">HARD</small>' : ''}</span>
+      <span class="floor-number ${isHard ? 'is-hard' : ''}"><b>${String(floor.floor).padStart(2, '0')}</b>${isHard ? '<small class="hard-badge">HARD</small>' : ''}${cleared ? '<small class="cleared-check-badge">✓ CLEARED</small>' : ''}</span>
       <span class="stage-boss"><strong>${escapeHTML(displayValue(floor.stage))}</strong><small>${escapeHTML(displayValue(floor.boss))}</small></span>
       <span class="summary-modifier">${modifierHTML(modifier)}</span>
       <span class="summary-hp summary-boss-hp"><b class="boss-hp-value">${hpHTML(floor.bossHP?.actual || floor.bossHP?.base, modifier)}</b><small>Boss HP</small></span>
@@ -325,9 +494,10 @@ function floorDetails(floor) {
       <section class="info-panel"><div class="panel-title"><span>02</span><strong>HP</strong></div><div class="hp-row hp-row-boss"><span>Base HP</span><b class="boss-hp-value">${hpHTML(floor.bossHP?.base, modifier)}</b></div><div class="hp-row hp-row-boss"><span>Actual HP</span><b class="boss-hp-value">${hpHTML(floor.bossHP?.actual, modifier)}</b></div><div class="hp-row hp-row-enemy"><span>Enemy Wave 1</span><b class="enemy-hp-value">${escapeHTML(displayValue(floor.enemyHP))}</b></div></section>
       <section class="info-panel"><div class="panel-title"><span>03</span><strong>Resistances</strong></div><div class="resistance-list">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</div></section>
       <section class="info-panel affinity-panel"><div class="panel-title"><span>04</span><strong>Affinities</strong></div><div class="affinity-list">${affinities.length ? affinities.map(affinityHTML).join('') : '<span class="muted-value">No affinities listed.</span>'}</div></section>
-    </div><div class="loadout-section">${loadoutHTML(floor)}${!hasAnyLoadout(floor.floor) ? `<div class="loadout-community-fallback">
+    </div>
+    <div class="loadout-section">${loadoutHTML(floor)}${!hasAnyLoadout(floor.floor) ? `<div class="loadout-community-fallback">
         ${strategyHTML(floor) || suggestStrategyButtonHTML(floor)}
-        <div class="loadout-actions-row">${hardVoteHTML(floor)}${copyFloorLinkHTML(floor.floor)}</div>
+        ${communityActionsHTML(floor)}
       </div>` : ''}</div></div></div>`;
 }
 
@@ -335,7 +505,7 @@ function refreshVisibleLoadouts() {
   $$('.floor-card').forEach(card => {
     const floor = floors.find(item => String(item.floor) === card.dataset.floor);
     const section = card.querySelector('.loadout-section');
-    if (floor && section) { section.outerHTML = `<div class="loadout-section">${loadoutHTML(floor)}</div>`; bindLoadoutTabs(card); bindSuggestButtons(card); }
+    if (floor && section) { section.outerHTML = `<div class="loadout-section">${loadoutHTML(floor)}</div>`; bindLoadoutTabs(card); bindSuggestButtons(card); bindHardVoteButtons(card); bindClearedButtons(card); bindCounterCalculators(card); }
   });
 }
 
@@ -365,7 +535,8 @@ function bindLoadoutTabs(scope = document) {
 
 function floorCard(floor) {
   const modifier = cleanModifier(floor.modifier);
-  return `<article class="floor-card ${modifier ? 'has-modifier' : ''}" data-floor="${escapeHTML(floor.floor)}">${floorSummary(floor)}<div class="floor-details-host"></div></article>`;
+  const cleared = isFloorCleared(floor.floor);
+  return `<article class="floor-card ${modifier ? 'has-modifier' : ''} ${cleared ? 'is-cleared' : ''}" data-floor="${escapeHTML(floor.floor)}">${floorSummary(floor)}<div class="floor-details-host"></div></article>`;
 }
 
 function matchesSearch(floor, query) {
@@ -389,6 +560,7 @@ function matchesFilter(floor) {
   if (activeFilter === 'modifier') return Boolean(cleanModifier(floor.modifier));
   if (activeFilter === 'loadout') return hasAnyLoadout(floor.floor);
   if (activeFilter === 'hard') return getHardVotes(floor.floor) >= HARD_VOTE_THRESHOLD;
+  if (activeFilter === 'not-cleared') return !isFloorCleared(floor.floor);
   return true;
 }
 
@@ -406,8 +578,10 @@ function render() {
   listEl.innerHTML = ordered.map(floorCard).join('');
   bindLoadoutTabs(listEl);
   bindHardVoteButtons(listEl);
+  bindClearedButtons(listEl);
   bindShareButtons(listEl);
   bindSuggestButtons(listEl);
+  updateClearedProgress();
   emptyEl.classList.toggle('hidden', ordered.length !== 0);
   const emptyStrong = emptyEl.querySelector('strong');
   const emptySpan = emptyEl.querySelector('span');
@@ -415,6 +589,9 @@ function render() {
     if (activeFilter === 'hard') {
       emptyStrong.textContent = 'No Hard Floors yet';
       emptySpan.textContent = "There aren't any floors with 5+ hard votes yet.";
+    } else if (activeFilter === 'not-cleared') {
+      emptyStrong.textContent = 'No uncleared floors found';
+      emptySpan.textContent = 'Every floor is currently marked as cleared.';
     } else {
       emptyStrong.textContent = 'No floors found';
       emptySpan.textContent = 'Try another search or change the filters.';
@@ -422,12 +599,24 @@ function render() {
   }
   resultCountEl.textContent = activeFilter === 'hard'
     ? `${ordered.length} hard floors`
-    : `${ordered.length} of ${floors.length} floors`;
+    : activeFilter === 'not-cleared'
+      ? `${ordered.length} not cleared floors`
+      : `${ordered.length} of ${floors.length} floors`;
   clearSearchEl.classList.toggle('hidden', !query);
 
   $$('.floor-summary').forEach(button => button.addEventListener('click', () => {
     const card = button.closest('.floor-card');
-    const open = card.classList.toggle('open');
+    const open = !card.classList.contains('open');
+    if (open) {
+      $$('.floor-card.open').forEach(otherCard => {
+        if (otherCard === card) return;
+        otherCard.classList.remove('open');
+        otherCard.querySelector('.floor-summary')?.setAttribute('aria-expanded', 'false');
+        otherCard.querySelectorAll('.counter-calculator-popup').forEach(popup => popup.classList.add('hidden'));
+        otherCard.querySelectorAll('[data-calculator-toggle]').forEach(toggle => toggle.setAttribute('aria-expanded', 'false'));
+      });
+    }
+    card.classList.toggle('open', open);
     button.setAttribute('aria-expanded', String(open));
     const host = card.querySelector('.floor-details-host');
     if (open && host && !host.dataset.rendered) {
@@ -437,8 +626,10 @@ function render() {
         host.dataset.rendered = 'true';
         bindLoadoutTabs(host);
         bindHardVoteButtons(host);
+        bindClearedButtons(host);
         bindShareButtons(host);
         bindSuggestButtons(host);
+        bindCounterCalculators(host);
       }
     }
   }));
@@ -707,45 +898,19 @@ async function init() {
 // to pop up again for everyone.
 const UPDATE_LOG_HISTORY = [
   {
-    id: 3,
-    categories: {
-      Changes: [
-        { title: 'Community suggestions', description: 'Added "Suggest Loadout" and "Suggest strategy or video" buttons on floors that are missing them. Submissions go straight to our Discord for review.' }
-      ],
-      Strategies: [],
-      Uis: [
-        { title: 'Loadout layout', description: 'Fixed the empty space next to loadout images — the image and text now line up properly instead of leaving a big gap.' },
-        { title: 'Copy Floor Link', description: 'Moved next to Vote Hard and made smaller, instead of a big button stuck in the corner.' },
-        { title: 'Resistances alignment', description: 'Resistance values are now centered and stacked, matching how affinities are displayed.' },
-        { title: 'Update log', description: 'No longer scrolls internally, and you can now browse the last 3 versions with the Versions button below.' }
-      ]
-    }
-  },
-  {
-    id: 2,
-    categories: {
-      Changes: [],
-      Strategies: [
-        { title: 'New Loadouts', description: '278, 283, 285, 288, 291, 295' }
-      ],
-      Uis: []
-    }
-  },
-  {
     id: 1,
     categories: {
       Changes: [
-        { title: 'Hard Floors voting', description: 'Community voting for floors that are consistently marked as hard, with direct floor links and lighter floor interactions.' }
+        { title: 'Floor Cleared tracker', description: 'Mark any floor as cleared from its details panel and track your overall progress with the new bar above the floor list. Filter the list to only your cleared floors with the new "Cleared" button.' },
+        { title: 'Counter Calculator', description: 'Every floor now has a built-in calculator — pick an archetype and an element to estimate the damage multiplier against that boss.' }
       ],
-      Strategies: [
-        { title: 'New Strategies', description: '158(TI)' },
-        { title: 'New Loadouts', description: '250, 276, 177(TI), 158(TI), 162(TI)' }
-      ],
+      Strategies: [{ title: 'Season 2', description: 'Due to tower season 2 all floors informations (Maps, Bosses) are wrong and will be updated soon.' }],
       Uis: [
-        { title: 'Bigger affinities', description: 'Affinity icons in the details panel no longer render smaller than resistances.' }
+        { title: 'Resistances & Affinities alignment', description: 'Fixed the values in the floor list not lining up under their column headers — both are now properly centered.' },
+        { title: 'Update log redesign', description: 'A cleaner layout with color-coded entries per category and a refreshed look.' }
       ]
     }
-  }
+  },
 ];
 
 const UPDATE_LOG = UPDATE_LOG_HISTORY[0]; // latest — kept for back-compat with anything referencing it directly

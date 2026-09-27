@@ -43,7 +43,7 @@
 
 .suggest-form { margin-top: 20px; display: grid; gap: 14px; }
 .suggest-field { display: grid; gap: 7px; }
-.suggest-field > span { color: var(--muted); font: 700 10px 'JetBrains Mono', monospace; letter-spacing: .8px; text-transform: uppercase; }
+.suggest-field > span { color: var(--muted); font: 700 10px 'Inter', monospace; letter-spacing: .8px; text-transform: uppercase; }
 .suggest-field input[type="file"],
 .suggest-field input[type="url"],
 .suggest-field input[type="text"],

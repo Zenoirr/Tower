@@ -36,11 +36,49 @@
   padding: 30px;
   border: 1px solid #5149a7;
   border-radius: 14px;
-  background: #111020;
+  background: linear-gradient(180deg, #15132e 0%, #111020 220px);
   box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(117,107,234,.12);
+  overflow: hidden;
 }
-.update-dialog h2 { margin-top: 9px; font-size: 28px; letter-spacing: -.7px; }
+.update-dialog::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #58d6a4, #6cb8ff, #f2c14e, #b57bff);
+  background-size: 200% 100%;
+  animation: update-gradient-shift 6s ease infinite;
+}
+@keyframes update-gradient-shift {
+  0%, 100% { background-position: 0% 0; }
+  50% { background-position: 100% 0; }
+}
+.update-dialog h2 {
+  margin-top: 9px;
+  font-size: 28px;
+  letter-spacing: -.7px;
+  background: linear-gradient(90deg, #f7f5ff, #cfc9ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 .update-dialog p { margin-top: 10px; color: var(--muted); font-size: 15px; line-height: 1.65; }
+#updateModalKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border: 1px solid rgba(117,107,234,.4);
+  background: rgba(117,107,234,.12);
+  border-radius: 20px;
+}
+#updateModalKicker::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #58d6a4;
+  box-shadow: 0 0 8px #58d6a4;
+}
 
 .update-log-body {
   margin-top: 18px;
@@ -56,7 +94,7 @@
   color: var(--muted);
   border-radius: 7px;
   padding: 9px 12px;
-  font: 700 10px 'JetBrains Mono', monospace;
+  font: 700 10px 'Inter', monospace;
   letter-spacing: .5px;
   cursor: pointer;
 }
@@ -69,11 +107,12 @@
   color: var(--muted);
   border-radius: 6px;
   padding: 6px 11px;
-  font: 700 10px 'JetBrains Mono', monospace;
+  font: 700 10px 'Inter', monospace;
   cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, color .15s ease, transform .12s ease;
 }
-.update-version-pill:hover { color: #fff; border-color: #6b61cf; }
-.update-version-pill.active { color: #fff; background: #292260; border-color: #5149a7; }
+.update-version-pill:hover { color: #fff; border-color: #6b61cf; transform: translateY(-1px); }
+.update-version-pill.active { color: #fff; background: #292260; border-color: #5149a7; box-shadow: 0 4px 14px -8px rgba(88,79,208,.8); }
 .update-category { display: grid; gap: 10px; }
 .update-category-title {
   display: inline-flex;
@@ -81,7 +120,7 @@
   gap: 8px;
   width: fit-content;
   color: #8278e8;
-  font: 700 10px 'JetBrains Mono', monospace;
+  font: 700 10px 'Inter', monospace;
   letter-spacing: 1.4px;
   text-transform: uppercase;
 }
@@ -98,13 +137,24 @@
 .update-category[data-category="Strategies"] .update-category-title::before { background: #f2c14e; }
 .update-category[data-category="Uis"] .update-category-title { color: #6cb8ff; }
 .update-category[data-category="Uis"] .update-category-title::before { background: #6cb8ff; }
-.update-entry-list { display: grid; gap: 10px; }
+.update-entry-list { display: grid; gap: 8px; }
 .update-entry {
+  position: relative;
   border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
   background: #15152a;
   border-radius: 8px;
   padding: 10px 13px;
+  transition: border-color .18s ease, background .18s ease, transform .15s ease;
 }
+.update-entry:hover {
+  background: #191933;
+  border-color: #3d3864;
+  transform: translateX(2px);
+}
+.update-category[data-category="Changes"] .update-entry { border-left-color: #58d6a4; }
+.update-category[data-category="Strategies"] .update-entry { border-left-color: #f2c14e; }
+.update-category[data-category="Uis"] .update-entry { border-left-color: #6cb8ff; }
 .update-entry strong { display: block; font-size: 13px; color: var(--text); }
 .update-entry p { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.55; }
 .update-close {
@@ -128,13 +178,14 @@
   min-height: 48px;
   border: 1px solid #6a60d8;
   border-radius: 8px;
-  background: #4c43b9;
+  background: linear-gradient(135deg, #4c43b9, #5b3fc4);
   color: #fff;
   font-size: 15px;
   font-weight: 800;
   cursor: pointer;
+  transition: transform .12s ease, box-shadow .18s ease, background .18s ease;
 }
-.update-ok:hover { background: #5a50cf; }
+.update-ok:hover { background: linear-gradient(135deg, #5a50cf, #6b48d6); box-shadow: 0 10px 24px -12px rgba(88,79,208,.7); transform: translateY(-1px); }
 
 @media (max-width: 760px) {
   .update-log-button { padding: 9px 10px; font-size: 11px; }

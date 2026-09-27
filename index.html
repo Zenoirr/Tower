@@ -22,11 +22,11 @@
   <title>Tower of Goy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=19">
-  <link rel="stylesheet" href="css/cards.css?v=20">
-  <link rel="stylesheet" href="css/responsive.css?v=18">
-  <link rel="stylesheet" href="css/update-log.css?v=20">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=21">
+  <link rel="stylesheet" href="css/cards.css?v=22">
+  <link rel="stylesheet" href="css/responsive.css?v=19">
+  <link rel="stylesheet" href="css/update-log.css?v=22">
   <link rel="stylesheet" href="css/suggestions.css?v=1">
 </head>
 <body>
@@ -149,7 +149,7 @@
 
       <section id="towerPage" class="page tower-page hidden">
         <div class="page-heading">
-          <div><span class="section-kicker">TOWER</span><h1>Floors</h1><p>Open any floor to view all parameters.</p></div>
+          <div><span class="section-kicker">TOWER</span><h1>Floors</h1><p>Open any floor to view all parameters -- Due to tower season 2 all floors informations (Maps, Bosses) are wrong and will be updated soon.</p></div>
           <div class="page-heading-stats"><span id="apiStatus" class="status"><i></i><span>Connecting</span></span></div>
         </div>
 
@@ -165,6 +165,7 @@
               <button class="filter-button" data-filter="modifier">With modifier</button>
               <button class="filter-button" data-filter="loadout">With loadout</button>
               <button class="filter-button hard-filter-button" data-filter="hard">Hard</button>
+              <button class="filter-button cleared-filter-button" data-filter="not-cleared">Not Cleared</button>
             </div>
             <div class="tower-selects">
               <select id="stageFilter" aria-label="Filtrar por stage"><option value="all">All stages</option></select>
@@ -172,6 +173,11 @@
             </div>
           </div>
         </section>
+
+        <div class="cleared-progress" id="clearedProgress">
+          <div class="cleared-progress-bar"><div class="cleared-progress-fill" id="clearedProgressFill"></div></div>
+          <span id="clearedProgressText">0 / 0 floors cleared</span>
+        </div>
 
         <div class="result-bar"><span id="resultCount">Loading...</span></div>
         <div class="table-head">
@@ -218,6 +224,6 @@
   <script src="js/sheets.js?v=19"></script>
   <script src="js/votes.js?v=2"></script>
   <script src="js/suggestions.js?v=1"></script>
-  <script src="js/main.js?v=22"></script>
+  <script src="js/main.js?v=23"></script>
 </body>
 </html>
