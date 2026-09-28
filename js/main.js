@@ -898,11 +898,11 @@ async function init() {
 // to pop up again for everyone.
 const UPDATE_LOG_HISTORY = [
     {
-    id: 2,
+    id: 2.1,
     categories: {
       Changes: [],
-      Strategies: [{ title: 'Maps', description: 'All maps for SEASON 2 have been added - Mods Coming Soon.' }],
-      Uis: []
+      Strategies: [{ title: 'Maps', description: 'All 100-300 Floors have been added and checked.' }],
+      Uis: [{ title: 'Icons', description: 'Added Splitter, Retaliation Counter, Veil & Zombie Icons for boss modifiers.' }]
     }
   },
   {
