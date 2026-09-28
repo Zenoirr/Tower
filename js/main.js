@@ -987,7 +987,7 @@ const UPDATE_LOG_HISTORY = [
       Changes: [],
       Strategies: [{title: 'Floors' description: 'All 100-300 Floors have been added and checked.'}],
       Uis: [
-        { title: 'Icons', description: 'Added Splitter, Retaliation Counter, Veil & Zombie Icons for boss modifiers.' },
+        { title: 'Icons', description: 'Added Splitter, Retaliation Counter, Veil & Zombie Icons for boss modifiers.' }
       ]
     }
   },
