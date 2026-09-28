@@ -111,7 +111,8 @@ const REMOTE_MODIFIER_ICONS = {
   Splitter: 'https://animeexpedition.com/images/modifiers/splitter.webp',
   Veil: 'https://animeexpedition.com/images/modifiers/veil.webp',
   Zombie: 'https://animeexpedition.com/images/modifiers/zombie.webp',
-  'Retaliation Counter': 'https://animeexpedition.com/images/modifiers/retaliation-counter.webp'
+  'Retaliation Counter': 'https://animeexpedition.com/images/modifiers/retaliation-counter.webp',
+  Reinforced: 'https://animeexpedition.com/images/modifiers/reinforced.webp'
 };
 
 function iconHTML(type, name, className = '') {
@@ -121,7 +122,10 @@ function iconHTML(type, name, className = '') {
   if (!file && !remote) return '';
 
   const color = getIconColor(clean);
-  const src = remote || `assets/${escapeHTML(type)}/${escapeHTML(file)}`;
+  if (remote) {
+    return `<img class="icon-image ${escapeHTML(className)}" src="${escapeHTML(remote)}" alt="" aria-hidden="true" data-icon-name="${escapeHTML(clean)}" loading="lazy" decoding="async">`;
+  }
+  const src = `assets/${escapeHTML(type)}/${escapeHTML(file)}`;
   return `<img class="icon-image ${escapeHTML(className)}" src="${escapeHTML(src)}" alt="" aria-hidden="true" data-icon-name="${escapeHTML(clean)}" loading="lazy" decoding="async" style="--icon-color:${escapeHTML(color)}">`;
 }
 
@@ -131,10 +135,11 @@ const MODIFIER_COLORS = {
   Greed: '#E8E8E8',
   Tartaros: '#7CFF00',
   Transformer: '#AFAFAF',
-  Veil: '#C6B7FF',
-  Splitter: '#FF7B7B',
-  Zombie: '#78D27B',
-  'Retaliation Counter': '#FFB14A'
+  Veil: '#B52BFF',
+  Splitter: '#00CFFF',
+  Zombie: '#AFAFAF',
+  Reinforced: '#AFAFAF',
+  'Retaliation Counter': '#FFFFFF'
 };
 
 function colorExtraValue(text, modifier = '') {
@@ -145,23 +150,21 @@ function colorExtraValue(text, modifier = '') {
   const color = MODIFIER_COLORS[modifierName];
   if (!color) return escapeHTML(clean);
 
-  if (modifierName === 'Summoner') {
-    return escapeHTML(clean).replace(/(\([^)]*\))/g, `<span class="modifier-extra" style="--modifier-extra-color:${color}">$1</span>`);
-  }
-
-  if (modifierName === 'Sword') {
-    return escapeHTML(clean).replace(/(\d+(?:\.\d+)?x?\s*(?:revives?|revs?))/gi, `<span class="modifier-extra" style="--modifier-extra-color:${color}">$1</span>`);
-  }
-
-  if (modifierName === 'Greed') {
-    return escapeHTML(clean).replace(/(\+?\d+(?:\.\d+)?%)/g, `<span class="modifier-extra" style="--modifier-extra-color:${color}">$1</span>`);
-  }
-
-  if (modifierName === 'Tartaros') {
-    return escapeHTML(clean).replace(/(\+?\d+(?:\.\d+)?[KMB]?\/\s*10s)/gi, `<span class="modifier-extra" style="--modifier-extra-color:${color}">$1</span>`);
-  }
-
-  return escapeHTML(clean);
+  const escaped = escapeHTML(clean);
+  const patterns = {
+    Tartaros: /(\+?\d+(?:\.\d+)?[KMBT]?\/\s*10s)/gi,
+    Greed: /(\+?\d+(?:\.\d+)?[KMBT]?\/\s*10s)/gi,
+    Veil: /(\+?\d+(?:\.\d+)?%)/g,
+    Transformer: /(\+?\d+(?:\.\d+)?%)/g,
+    Reinforced: /(\+?\d+(?:\.\d+)?%)/g,
+    Splitter: /(\([^)]*\))/g,
+    Sword: /(\d+(?:\.\d+)?x?\s*(?:revives?|revs?))/gi,
+    Summoner: /(\([^)]*\))/g
+  };
+  const pattern = patterns[modifierName];
+  return pattern
+    ? escaped.replace(pattern, `<span class="modifier-extra" style="--modifier-extra-color:${color}">$1</span>`)
+    : escaped;
 }
 
 function parseCompactHP(value) {
@@ -225,8 +228,12 @@ function getBossHPDisplay(floor) {
       return effect(formatCompactHP(baseNumber * 3), '(+200%)');
     case 'Transformer':
       return effect(formatCompactHP(baseNumber * 1.5), '(+50%)');
-    case 'Splitter':
-      return effect(`3 × ${formatCompactHP(baseNumber * 0.33)}`, '(33% each)');
+    case 'Reinforced':
+      return effect(formatCompactHP(baseNumber * 1.3), '(+30%)');
+    case 'Splitter': {
+      const splitHP = formatCompactHP(baseNumber * 0.33);
+      return effect(`${baseRaw} + (3 × ${splitHP})`, '(33% each)');
+    }
     default:
       return { base: baseRaw, actual: baseRaw, automatic: true };
   }
@@ -238,19 +245,24 @@ function hpHTML(value, modifier = '') {
 
   const escaped = escapeHTML(clean);
   const modifierName = cleanModifier(modifier);
-  if (modifierName === 'Summoner') {
-    return escaped.replace(/(\([^)]*\))/g, `<span class="modifier-extra" style="--modifier-extra-color:${MODIFIER_COLORS.Summoner}">$1</span>`);
-  }
-  if (modifierName === 'Greed') {
-    return escaped.replace(/(\+?\d+(?:\.\d+)?%)/g, `<span class="modifier-extra" style="--modifier-extra-color:${MODIFIER_COLORS.Greed}">$1</span>`);
-  }
-  if (modifierName === 'Tartaros') {
-    return escaped.replace(/(\+?\d+(?:\.\d+)?[KMB]?\/\s*10s)/gi, `<span class="modifier-extra" style="--modifier-extra-color:${MODIFIER_COLORS.Tartaros}">$1</span>`);
-  }
-  if (modifierName === 'Sword') {
-    return escaped.replace(/(\d+(?:\.\d+)?x?\s*(?:revives?|revs?))/gi, `<span class="modifier-extra" style="--modifier-extra-color:${MODIFIER_COLORS.Sword}">$1</span>`);
-  }
-  return escaped;
+  const color = MODIFIER_COLORS[modifierName];
+  if (!color) return escaped;
+
+  const patterns = {
+    Tartaros: /(\+?\d+(?:\.\d+)?[KMBT]?\/\s*10s)/gi,
+    Greed: /(\+?\d+(?:\.\d+)?[KMBT]?\/\s*10s)/gi,
+    Veil: /(\+?\d+(?:\.\d+)?%)/g,
+    Transformer: /(\+?\d+(?:\.\d+)?%)/g,
+    Reinforced: /(\+?\d+(?:\.\d+)?%)/g,
+    Splitter: /(\([^)]*\))/g,
+    Sword: /(\d+(?:\.\d+)?x?\s*(?:revives?|revs?))/gi,
+    Summoner: /(\([^)]*\))/g
+  };
+
+  const pattern = patterns[modifierName];
+  return pattern
+    ? escaped.replace(pattern, `<span class="modifier-extra" style="--modifier-extra-color:${color}">$1</span>`)
+    : escaped;
 }
 
 function modifierHTML(modifier) {
@@ -982,28 +994,59 @@ async function init() {
 // to pop up again for everyone.
 const UPDATE_LOG_HISTORY = [
   {
-    id: 1.1,
+    id: '1.2',
+    categories: {
+      Changes: [
+        { title: 'Loadouts added for Floors 177, 178, 179', description: 'Manual loadout images are now available for these floors.' },
+        { title: 'Floor Cleared tracker', description: 'Mark any floor as cleared from its details panel and track your overall progress with the new bar above the floor list. Filter the list to only your cleared floors with the new "Cleared" button.' },
+        { title: 'Counter Calculator', description: 'Every floor now has a built-in calculator — pick an archetype and an element to estimate the damage multiplier against that boss.' },
+        { title: 'Modifier HP values', description: 'Added automatic Actual HP calculations while keeping Base HP unchanged. Actual HP now represents the Base HP plus the HP added by the modifier: Tartaros/Greed show +10% HP per 10s, Transformer +50%, Reinforced +30%, Veil +200%, and Splitter shows the original HP plus 3 respawned enemies with 33% of the original HP each. Manual Actual HP values from the Sheet still override the automatic calculation.' },
+        { title: 'Modifier icons and colors', description: 'Added Splitter, Retaliation Counter, Zombie, Veil and Reinforced icon support with their configured modifier colors.' }
+      ],
+      Strategies: [],
+      Uis: [
+        { title: 'Resistances & Affinities alignment', description: 'Fixed the values in the floor list not lining up under their column headers — both are now properly centered.' },
+        { title: 'Update log redesign', description: 'A cleaner layout with color-coded entries per category and a refreshed look.' }
+      ]
+    }
+  },
+  {
+    id: 3,
+    categories: {
+      Changes: [
+        { title: 'Community suggestions', description: 'Added "Suggest Loadout" and "Suggest strategy or video" buttons on floors that are missing them. Submissions go straight to our Discord for review.' }
+      ],
+      Strategies: [],
+      Uis: [
+        { title: 'Loadout layout', description: 'Fixed the empty space next to loadout images — the image and text now line up properly instead of leaving a big gap.' },
+        { title: 'Copy Floor Link', description: 'Moved next to Vote Hard and made smaller, instead of a big button stuck in the corner.' },
+        { title: 'Resistances alignment', description: 'Resistance values are now centered and stacked, matching how affinities are displayed.' },
+        { title: 'Update log', description: 'No longer scrolls internally, and you can now browse the last 3 versions with the Versions button below.' }
+      ]
+    }
+  },
+  {
+    id: 2,
     categories: {
       Changes: [],
       Strategies: [
-        { title: 'Floors', description: 'All 100-300 Floors have been added and checked.' }
+        { title: 'New Loadouts', description: '278, 283, 285, 288, 291, 295' }
       ],
-      Uis: [
-        { title: 'Icons', description: 'Added Splitter, Retaliation Counter, Veil & Zombie Icons for boss modifiers.' }
-      ]
+      Uis: []
     }
   },
   {
     id: 1,
     categories: {
       Changes: [
-        { title: 'Floor Cleared tracker', description: 'Mark any floor as cleared from its details panel and track your overall progress with the new bar above the floor list. Filter the list to only your cleared floors with the new "Cleared" button.' },
-        { title: 'Counter Calculator', description: 'Every floor now has a built-in calculator — pick an archetype and an element to estimate the damage multiplier against that boss.' }
+        { title: 'Hard Floors voting', description: 'Community voting for floors that are consistently marked as hard, with direct floor links and lighter floor interactions.' }
       ],
-      Strategies: [],
+      Strategies: [
+        { title: 'New Strategies', description: '158(TI)' },
+        { title: 'New Loadouts', description: '250, 276, 177(TI), 158(TI), 162(TI)' }
+      ],
       Uis: [
-        { title: 'Resistances & Affinities alignment', description: 'Fixed the values in the floor list not lining up under their column headers — both are now properly centered.' },
-        { title: 'Update log redesign', description: 'A cleaner layout with color-coded entries per category and a refreshed look.' }
+        { title: 'Bigger affinities', description: 'Affinity icons in the details panel no longer render smaller than resistances.' }
       ]
     }
   }

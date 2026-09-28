@@ -34,7 +34,8 @@ const ICONS = {
     Splitter: 'https://animeexpedition.com/images/modifiers/splitter.webp',
     Veil: 'https://animeexpedition.com/images/modifiers/veil.webp',
     Zombie: 'https://animeexpedition.com/images/modifiers/zombie.webp',
-    'Retaliation Counter': 'https://animeexpedition.com/images/modifiers/retaliation-counter.webp'
+    'Retaliation Counter': 'https://animeexpedition.com/images/modifiers/retaliation-counter.webp',
+    Reinforced: 'https://animeexpedition.com/images/modifiers/reinforced.webp'
   }
 };
 
@@ -45,7 +46,7 @@ const ICON_COLORS = {
   Bulwark: '#E8E8E8', 'Zone Debuff': '#E8E8E8', Transformer: '#AFAFAF', Greed: '#E8E8E8',
   Shielded: '#00BFEF', Summoner: '#B52BFF', Burrowing: '#A85A2A', Tartaros: '#7CFF00',
   Momentum: '#009FEF', 'Status Cleanse': '#E8E8E8', Commander: '#FFD900', Stunner: '#E8E8E8', Sword: '#00CFFF',
-  Splitter: '#FF7B7B', Veil: '#C6B7FF', Zombie: '#78D27B', 'Retaliation Counter': '#FFB14A'
+  Splitter: '#00CFFF', Veil: '#B52BFF', Zombie: '#AFAFAF', Reinforced: '#AFAFAF', 'Retaliation Counter': '#FFFFFF'
 };
 
 function normalizeName(value) {
