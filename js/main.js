@@ -981,8 +981,18 @@ async function init() {
 // Add a new entry at the top (with a new `id`) any time you want the log
 // to pop up again for everyone.
 const UPDATE_LOG_HISTORY = [
+    {
+    id: 1.1,
+    categories: {
+      Changes: [],
+      Strategies: [{title: 'Floors' description: 'All 100-300 Floors have been added and checked.'}],
+      Uis: [
+        { title: 'Icons', description: 'Added Splitter, Retaliation Counter, Veil & Zombie Icons for boss modifiers.' },
+      ]
+    }
+  },
   {
-    id: 4,
+    id: 1,
     categories: {
       Changes: [
         { title: 'Floor Cleared tracker', description: 'Mark any floor as cleared from its details panel and track your overall progress with the new bar above the floor list. Filter the list to only your cleared floors with the new "Cleared" button.' },
@@ -995,46 +1005,6 @@ const UPDATE_LOG_HISTORY = [
       ]
     }
   },
-  {
-    id: 3,
-    categories: {
-      Changes: [
-        { title: 'Community suggestions', description: 'Added "Suggest Loadout" and "Suggest strategy or video" buttons on floors that are missing them. Submissions go straight to our Discord for review.' }
-      ],
-      Strategies: [],
-      Uis: [
-        { title: 'Loadout layout', description: 'Fixed the empty space next to loadout images — the image and text now line up properly instead of leaving a big gap.' },
-        { title: 'Copy Floor Link', description: 'Moved next to Vote Hard and made smaller, instead of a big button stuck in the corner.' },
-        { title: 'Resistances alignment', description: 'Resistance values are now centered and stacked, matching how affinities are displayed.' },
-        { title: 'Update log', description: 'No longer scrolls internally, and you can now browse the last 3 versions with the Versions button below.' }
-      ]
-    }
-  },
-  {
-    id: 2,
-    categories: {
-      Changes: [],
-      Strategies: [
-        { title: 'New Loadouts', description: '278, 283, 285, 288, 291, 295' }
-      ],
-      Uis: []
-    }
-  },
-  {
-    id: 1,
-    categories: {
-      Changes: [
-        { title: 'Hard Floors voting', description: 'Community voting for floors that are consistently marked as hard, with direct floor links and lighter floor interactions.' }
-      ],
-      Strategies: [
-        { title: 'New Strategies', description: '158(TI)' },
-        { title: 'New Loadouts', description: '250, 276, 177(TI), 158(TI), 162(TI)' }
-      ],
-      Uis: [
-        { title: 'Bigger affinities', description: 'Affinity icons in the details panel no longer render smaller than resistances.' }
-      ]
-    }
-  }
 ];
 
 const UPDATE_LOG = UPDATE_LOG_HISTORY[0]; // latest — kept for back-compat with anything referencing it directly
