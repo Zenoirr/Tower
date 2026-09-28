@@ -107,20 +107,34 @@ const LOCAL_ICON_FILES = {
   modifiers: { Bulwark: 'bulwark.png', 'Zone Debuff': 'zone_debuff.png', Transformer: 'transformer.png', Greed: 'greed.png', Shielded: 'shielded.png', Summoner: 'summoner.png', Burrowing: 'burrowing.png', Tartaros: 'tartaros.png', Momentum: 'momentum.png', 'Status Cleanse': 'status_cleanse.png', Commander: 'commander.png', Stunner: 'stunner.png', Sword: 'sword.png' }
 };
 
+const REMOTE_MODIFIER_ICONS = {
+  Splitter: 'https://animeexpedition.com/images/modifiers/splitter.webp',
+  Veil: 'https://animeexpedition.com/images/modifiers/veil.webp',
+  Zombie: 'https://animeexpedition.com/images/modifiers/zombie.webp',
+  'Retaliation Counter': 'https://animeexpedition.com/images/modifiers/retaliation-counter.webp'
+};
+
 function iconHTML(type, name, className = '') {
   const clean = String(name ?? '').trim();
   const file = LOCAL_ICON_FILES[type]?.[clean];
-  if (!file) return '';
+  const remote = type === 'modifiers' ? REMOTE_MODIFIER_ICONS[clean] : '';
+  if (!file && !remote) return '';
 
   const color = getIconColor(clean);
-  return `<img class="icon-image ${escapeHTML(className)}" src="assets/${escapeHTML(type)}/${escapeHTML(file)}" alt="" aria-hidden="true" data-icon-name="${escapeHTML(clean)}" style="--icon-color:${escapeHTML(color)}">`;
+  const src = remote || `assets/${escapeHTML(type)}/${escapeHTML(file)}`;
+  return `<img class="icon-image ${escapeHTML(className)}" src="${escapeHTML(src)}" alt="" aria-hidden="true" data-icon-name="${escapeHTML(clean)}" loading="lazy" decoding="async" style="--icon-color:${escapeHTML(color)}">`;
 }
 
 const MODIFIER_COLORS = {
   Summoner: '#B52BFF',
   Sword: '#00CFFF',
   Greed: '#E8E8E8',
-  Tartaros: '#7CFF00'
+  Tartaros: '#7CFF00',
+  Transformer: '#AFAFAF',
+  Veil: '#C6B7FF',
+  Splitter: '#FF7B7B',
+  Zombie: '#78D27B',
+  'Retaliation Counter': '#FFB14A'
 };
 
 function colorExtraValue(text, modifier = '') {
@@ -148,6 +162,74 @@ function colorExtraValue(text, modifier = '') {
   }
 
   return escapeHTML(clean);
+}
+
+function parseCompactHP(value) {
+  const text = String(value ?? '').trim().replace(/,/g, '.').replace(/\s+/g, '');
+  if (!text) return null;
+  const match = text.match(/^(-?\d+(?:\.\d+)?)([KMBT])?/i);
+  if (!match) return null;
+  const number = Number(match[1]);
+  if (!Number.isFinite(number)) return null;
+  const multipliers = { K: 1e3, M: 1e6, B: 1e9, T: 1e12 };
+  return number * (multipliers[String(match[2] || '').toUpperCase()] || 1);
+}
+
+function formatCompactHP(value) {
+  if (!Number.isFinite(value)) return '---';
+  const abs = Math.abs(value);
+  const units = [
+    [1e12, 'T'],
+    [1e9, 'B'],
+    [1e6, 'M'],
+    [1e3, 'K']
+  ];
+  const unit = units.find(([size]) => abs >= size);
+  if (!unit) return String(Math.round(value));
+  const number = value / unit[0];
+  const digits = Math.abs(number) >= 100 ? 0 : Math.abs(number) >= 10 ? 1 : 2;
+  return `${number.toFixed(digits).replace(/\.0+$|(?<=\.\d)0+$/g, '')}${unit[1]}`;
+}
+
+function hpNumbersEqual(a, b) {
+  const left = parseCompactHP(a);
+  const right = parseCompactHP(b);
+  return left !== null && right !== null && Math.abs(left - right) < Math.max(1, Math.abs(right) * 0.000001);
+}
+
+function getBossHPDisplay(floor) {
+  const baseRaw = displayValue(floor.bossHP?.base);
+  const actualRaw = String(floor.bossHP?.actual ?? '').trim();
+  const modifier = cleanModifier(floor.modifier);
+  const baseNumber = parseCompactHP(baseRaw);
+
+  // A non-empty Actual HP that differs from Base HP is a manual Sheet override.
+  // Keeping equal Base/Actual values automatic lets the existing sheet work without re-entering every row.
+  if (actualRaw && actualRaw !== '---' && !hpNumbersEqual(actualRaw, baseRaw)) {
+    return { base: baseRaw, actual: actualRaw, automatic: false };
+  }
+
+  if (baseNumber === null || !modifier) {
+    return { base: baseRaw, actual: actualRaw || baseRaw, automatic: false };
+  }
+
+  const effect = (actual, note) => ({ base: baseRaw, actual: `${actual} ${note}`, automatic: true });
+
+  switch (modifier) {
+    case 'Tartaros':
+    case 'Greed': {
+      const extra = formatCompactHP(baseNumber * 0.10);
+      return effect(baseRaw, `(+${extra}/10s)`);
+    }
+    case 'Veil':
+      return effect(formatCompactHP(baseNumber * 3), '(+200%)');
+    case 'Transformer':
+      return effect(formatCompactHP(baseNumber * 1.5), '(+50%)');
+    case 'Splitter':
+      return effect(`3 × ${formatCompactHP(baseNumber * 0.33)}`, '(33% each)');
+    default:
+      return { base: baseRaw, actual: baseRaw, automatic: true };
+  }
 }
 
 function hpHTML(value, modifier = '') {
@@ -464,6 +546,7 @@ function loadoutHTML(floor) {
 
 function floorSummary(floor) {
   const modifier = cleanModifier(floor.modifier);
+  const bossHP = getBossHPDisplay(floor);
   const affinities = normalizeAffinityList(floor.affinities);
   const hardVotes = getHardVotes(floor.floor);
   const isHard = hardVotes >= HARD_VOTE_THRESHOLD;
@@ -476,7 +559,7 @@ function floorSummary(floor) {
       <span class="floor-number ${isHard ? 'is-hard' : ''}"><b>${String(floor.floor).padStart(2, '0')}</b>${isHard ? '<small class="hard-badge">HARD</small>' : ''}${cleared ? '<small class="cleared-check-badge">✓ CLEARED</small>' : ''}</span>
       <span class="stage-boss"><strong>${escapeHTML(displayValue(floor.stage))}</strong><small>${escapeHTML(displayValue(floor.boss))}</small></span>
       <span class="summary-modifier">${modifierHTML(modifier)}</span>
-      <span class="summary-hp summary-boss-hp"><b class="boss-hp-value">${hpHTML(floor.bossHP?.actual || floor.bossHP?.base, modifier)}</b><small>Boss HP</small></span>
+      <span class="summary-hp summary-boss-hp"><b class="boss-hp-value">${hpHTML(bossHP.actual, modifier)}</b><small>Boss HP</small></span>
       <span class="summary-hp summary-enemy-hp"><b class="enemy-hp-value">${escapeHTML(displayValue(floor.enemyHP))}</b><small>Enemy HP</small></span>
       <span class="summary-combat">
         <span class="summary-combat-line summary-resists">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</span>
@@ -488,10 +571,11 @@ function floorSummary(floor) {
 
 function floorDetails(floor) {
   const modifier = cleanModifier(floor.modifier);
+  const bossHP = getBossHPDisplay(floor);
   const affinities = normalizeAffinityList(floor.affinities);
   return `<div class="floor-details"><div class="details-inner"><div class="details-grid">
       <section class="info-panel"><div class="panel-title"><span>01</span><strong>Boss</strong></div><div class="boss-name">${escapeHTML(displayValue(floor.boss))}</div><div class="modifier-line"><span class="label">Modifier</span>${modifierHTML(modifier)}</div></section>
-      <section class="info-panel"><div class="panel-title"><span>02</span><strong>HP</strong></div><div class="hp-row hp-row-boss"><span>Base HP</span><b class="boss-hp-value">${hpHTML(floor.bossHP?.base, modifier)}</b></div><div class="hp-row hp-row-boss"><span>Actual HP</span><b class="boss-hp-value">${hpHTML(floor.bossHP?.actual, modifier)}</b></div><div class="hp-row hp-row-enemy"><span>Enemy Wave 1</span><b class="enemy-hp-value">${escapeHTML(displayValue(floor.enemyHP))}</b></div></section>
+      <section class="info-panel"><div class="panel-title"><span>02</span><strong>HP</strong></div><div class="hp-row hp-row-boss"><span>Base HP</span><b class="boss-hp-value">${hpHTML(bossHP.base, modifier)}</b></div><div class="hp-row hp-row-boss"><span>Actual HP</span><b class="boss-hp-value">${hpHTML(bossHP.actual, modifier)}</b></div><div class="hp-row hp-row-enemy"><span>Enemy Wave 1</span><b class="enemy-hp-value">${escapeHTML(displayValue(floor.enemyHP))}</b></div></section>
       <section class="info-panel"><div class="panel-title"><span>03</span><strong>Resistances</strong></div><div class="resistance-list">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</div></section>
       <section class="info-panel affinity-panel"><div class="panel-title"><span>04</span><strong>Affinities</strong></div><div class="affinity-list">${affinities.length ? affinities.map(affinityHTML).join('') : '<span class="muted-value">No affinities listed.</span>'}</div></section>
     </div>
@@ -897,28 +981,60 @@ async function init() {
 // Add a new entry at the top (with a new `id`) any time you want the log
 // to pop up again for everyone.
 const UPDATE_LOG_HISTORY = [
-    {
-    id: 2.1,
-    categories: {
-      Changes: [],
-      Strategies: [{ title: 'Maps', description: 'All 100-300 Floors have been added and checked.' }],
-      Uis: [{ title: 'Icons', description: 'Added Splitter, Retaliation Counter, Veil & Zombie Icons for boss modifiers.' }]
-    }
-  },
   {
-    id: 1,
+    id: 4,
     categories: {
       Changes: [
         { title: 'Floor Cleared tracker', description: 'Mark any floor as cleared from its details panel and track your overall progress with the new bar above the floor list. Filter the list to only your cleared floors with the new "Cleared" button.' },
         { title: 'Counter Calculator', description: 'Every floor now has a built-in calculator — pick an archetype and an element to estimate the damage multiplier against that boss.' }
       ],
-      Strategies: [{ title: 'Season 2', description: 'Due to tower season 2 all floors informations (Maps, Bosses) are wrong and will be updated soon.' }],
+      Strategies: [],
       Uis: [
         { title: 'Resistances & Affinities alignment', description: 'Fixed the values in the floor list not lining up under their column headers — both are now properly centered.' },
         { title: 'Update log redesign', description: 'A cleaner layout with color-coded entries per category and a refreshed look.' }
       ]
     }
   },
+  {
+    id: 3,
+    categories: {
+      Changes: [
+        { title: 'Community suggestions', description: 'Added "Suggest Loadout" and "Suggest strategy or video" buttons on floors that are missing them. Submissions go straight to our Discord for review.' }
+      ],
+      Strategies: [],
+      Uis: [
+        { title: 'Loadout layout', description: 'Fixed the empty space next to loadout images — the image and text now line up properly instead of leaving a big gap.' },
+        { title: 'Copy Floor Link', description: 'Moved next to Vote Hard and made smaller, instead of a big button stuck in the corner.' },
+        { title: 'Resistances alignment', description: 'Resistance values are now centered and stacked, matching how affinities are displayed.' },
+        { title: 'Update log', description: 'No longer scrolls internally, and you can now browse the last 3 versions with the Versions button below.' }
+      ]
+    }
+  },
+  {
+    id: 2,
+    categories: {
+      Changes: [],
+      Strategies: [
+        { title: 'New Loadouts', description: '278, 283, 285, 288, 291, 295' }
+      ],
+      Uis: []
+    }
+  },
+  {
+    id: 1,
+    categories: {
+      Changes: [
+        { title: 'Hard Floors voting', description: 'Community voting for floors that are consistently marked as hard, with direct floor links and lighter floor interactions.' }
+      ],
+      Strategies: [
+        { title: 'New Strategies', description: '158(TI)' },
+        { title: 'New Loadouts', description: '250, 276, 177(TI), 158(TI), 162(TI)' }
+      ],
+      Uis: [
+        { title: 'Bigger affinities', description: 'Affinity icons in the details panel no longer render smaller than resistances.' }
+      ]
+    }
+  }
 ];
 
 const UPDATE_LOG = UPDATE_LOG_HISTORY[0]; // latest — kept for back-compat with anything referencing it directly

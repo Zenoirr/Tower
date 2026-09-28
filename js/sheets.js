@@ -30,7 +30,11 @@ const ICONS = {
     'Status Cleanse': 'https://static.wikitide.net/animeexpeditionswiki/b/b9/Status_Cleanse_Icon.png',
     Commander: 'https://static.wikitide.net/animeexpeditionswiki/0/0e/Commander_Icon.png',
     Stunner: 'https://static.wikitide.net/animeexpeditionswiki/0/04/Stunner_Icon.png',
-    Sword: 'https://static.wikitide.net/animeexpeditionswiki/3/32/Sword_Icon.png'
+    Sword: 'https://static.wikitide.net/animeexpeditionswiki/3/32/Sword_Icon.png',
+    Splitter: 'https://animeexpedition.com/images/modifiers/splitter.webp',
+    Veil: 'https://animeexpedition.com/images/modifiers/veil.webp',
+    Zombie: 'https://animeexpedition.com/images/modifiers/zombie.webp',
+    'Retaliation Counter': 'https://animeexpedition.com/images/modifiers/retaliation-counter.webp'
   }
 };
 
@@ -40,7 +44,8 @@ const ICON_COLORS = {
   Fire: '#FB8700', Flame: '#FB8700', Storm: '#4ACDCB', Light: '#FCD64B', Dark: '#771CE7',
   Bulwark: '#E8E8E8', 'Zone Debuff': '#E8E8E8', Transformer: '#AFAFAF', Greed: '#E8E8E8',
   Shielded: '#00BFEF', Summoner: '#B52BFF', Burrowing: '#A85A2A', Tartaros: '#7CFF00',
-  Momentum: '#009FEF', 'Status Cleanse': '#E8E8E8', Commander: '#FFD900', Stunner: '#E8E8E8', Sword: '#00CFFF'
+  Momentum: '#009FEF', 'Status Cleanse': '#E8E8E8', Commander: '#FFD900', Stunner: '#E8E8E8', Sword: '#00CFFF',
+  Splitter: '#FF7B7B', Veil: '#C6B7FF', Zombie: '#78D27B', 'Retaliation Counter': '#FFB14A'
 };
 
 function normalizeName(value) {
