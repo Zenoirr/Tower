@@ -232,7 +232,7 @@ function getBossHPDisplay(floor) {
       return effect(formatCompactHP(baseNumber * 1.3), '(+30%)');
     case 'Splitter': {
       const splitHP = formatCompactHP(baseNumber * 0.33);
-      return effect(`${baseRaw} + (3 × ${splitHP})`, '(33% each)');
+      return effect(`${baseRaw} + (3 × ${splitHP})`);
     }
     default:
       return { base: baseRaw, actual: baseRaw, automatic: true };
