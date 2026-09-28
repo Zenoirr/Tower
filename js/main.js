@@ -981,11 +981,13 @@ async function init() {
 // Add a new entry at the top (with a new `id`) any time you want the log
 // to pop up again for everyone.
 const UPDATE_LOG_HISTORY = [
-    {
+  {
     id: 1.1,
     categories: {
       Changes: [],
-      Strategies: [{title: 'Floors' description: 'All 100-300 Floors have been added and checked.'}],
+      Strategies: [
+        { title: 'Floors', description: 'All 100-300 Floors have been added and checked.' }
+      ],
       Uis: [
         { title: 'Icons', description: 'Added Splitter, Retaliation Counter, Veil & Zombie Icons for boss modifiers.' }
       ]
@@ -1004,7 +1006,7 @@ const UPDATE_LOG_HISTORY = [
         { title: 'Update log redesign', description: 'A cleaner layout with color-coded entries per category and a refreshed look.' }
       ]
     }
-  },
+  }
 ];
 
 const UPDATE_LOG = UPDATE_LOG_HISTORY[0]; // latest — kept for back-compat with anything referencing it directly
