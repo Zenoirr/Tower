@@ -897,6 +897,14 @@ async function init() {
 // Add a new entry at the top (with a new `id`) any time you want the log
 // to pop up again for everyone.
 const UPDATE_LOG_HISTORY = [
+    {
+    id: 2,
+    categories: {
+      Changes: [],
+      Strategies: [{ title: 'Maps', description: 'All maps for SEASON 2 have been added - Mods Coming Soon.' }],
+      Uis: []
+    }
+  },
   {
     id: 1,
     categories: {
