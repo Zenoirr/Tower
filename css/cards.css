@@ -433,10 +433,13 @@
 /* Community features */
 .floor-number {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
   min-width: 0;
 }
+.floor-number small { white-space: nowrap; max-width: 100%; }
 .floor-number b { font: inherit; }
 .hard-badge {
   display: inline-flex;
@@ -582,7 +585,7 @@
 .floor-card.is-cleared .floor-summary { background: linear-gradient(90deg, rgba(88,214,164,.06), transparent 26%); }
 .cleared-check-badge {
   display: inline-flex; align-items: center; justify-content: center;
-  padding: 3px 5px; margin-left: 6px;
+  padding: 3px 5px; margin-left: 0;
   border: 1px solid rgba(88,214,164,.4); background: rgba(88,214,164,.14); color: #7be0b8;
   border-radius: 4px; font: 800 8px 'Inter', sans-serif; letter-spacing: .5px;
 }
@@ -789,3 +792,7 @@
   .counter-calculator-popup { position: static; width: auto; }
 }
 
+
+@media (max-width: 560px) {
+  .floor-number .hard-badge, .floor-number .cleared-check-badge { padding: 2px 3px; font-size: 7px; letter-spacing: .3px; }
+}

@@ -216,7 +216,7 @@ function getBossHPDisplay(floor) {
     return { base: baseRaw, actual: actualRaw || baseRaw, automatic: false };
   }
 
-  const effect = (actual, note) => ({ base: baseRaw, actual: `${actual} ${note}`, automatic: true });
+  const effect = (actual, note = '') => ({ base: baseRaw, actual: `${actual} ${note}`.trim(), automatic: true });
 
   switch (modifier) {
     case 'Tartaros':
@@ -231,8 +231,15 @@ function getBossHPDisplay(floor) {
     case 'Reinforced':
       return effect(formatCompactHP(baseNumber * 1.3), '(+30%)');
     case 'Splitter': {
+      // Only HP values: base + (3 respawned enemies at 33% of base each)
       const splitHP = formatCompactHP(baseNumber * 0.33);
       return effect(`${baseRaw} + (3 × ${splitHP})`);
+    }
+    case 'Summoner': {
+      // Only HP values: base + (summoned enemy range, 26%–39% of base HP)
+      const low = formatCompactHP(baseNumber * 0.26);
+      const high = formatCompactHP(baseNumber * 0.39);
+      return effect(`${baseRaw} (${low} - ${high})`);
     }
     default:
       return { base: baseRaw, actual: baseRaw, automatic: true };
@@ -958,7 +965,7 @@ async function init() {
     populateStageFilter();
     setStatus('online', 'Synchronized');
     try {
-      await loadSharedVotes();
+      await loadSharedVotes(20000);
     } catch (voteError) {
       console.warn('Shared votes could not be loaded:', voteError);
     }
@@ -1007,7 +1014,7 @@ const UPDATE_LOG_HISTORY = [
       Changes: [
         { title: 'Floor Cleared tracker', description: 'Mark any floor as cleared from its details panel and track your overall progress with the new bar above the floor list. Filter the list to only your cleared floors with the new "Cleared" button.' },
         { title: 'Counter Calculator', description: 'Every floor now has a built-in calculator — pick an archetype and an element to estimate the damage multiplier against that boss.' },
-        { title: 'Modifier HP values', description: 'Added automatic Actual HP calculations while keeping Base HP unchanged. Actual HP now represents the Base HP plus the HP added by the modifier: Tartaros/Greed show +10% HP per 10s, Transformer +50%, Reinforced +30%, Veil +200%, and Splitter shows the original HP plus 3 respawned enemies with 33% of the original HP each. Manual Actual HP values from the Sheet still override the automatic calculation.' },
+        { title: 'Modifier HP values', description: 'Added automatic Actual HP calculations while keeping Base HP unchanged. Actual HP now represents the Base HP plus the HP added by the modifier: Tartaros/Greed show +10% HP per 10s, Transformer +50%, Reinforced +30%, Veil +200%, Splitter shows the original HP plus its 3 respawned enemies, and Summoner shows the original HP plus the range of the summoned enemy HP (26%–39%). Manual Actual HP values from the Sheet still override the automatic calculation.' },
         { title: 'Modifier icons and colors', description: 'Added Splitter, Retaliation Counter, Zombie, Veil and Reinforced icon support with their configured modifier colors.' }
       ],
       Strategies: [],
