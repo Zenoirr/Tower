@@ -1004,7 +1004,10 @@ const UPDATE_LOG_HISTORY = [
     id: '1.25',
     categories: {
       Changes: [],
-      Strategies: [{title: 'Floors', description: 'All Floors 100-300 have now HPs, Bosses and modifiers'}],
+      Strategies: [
+        {title: 'Floors', description: 'All Floors 100-300 have now HPs, Bosses and modifiers'},
+        {title: 'Loadouts', description: 'Added Info for floors 215-238'}
+      ],
       Uis: []
     }
   },
