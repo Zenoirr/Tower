@@ -250,16 +250,24 @@
   overflow: visible;
   background: transparent;
 }
-.loadout-image-wrap {
+/* The loadout image itself is a short, wide strip (it will never grow to
+   fill a tall column), so pairing it with the vote/cleared/calculator
+   actions in the same right-hand block avoids leaving a big empty gap
+   below it — the actions now occupy that space instead. */
+.loadout-side {
   flex: 0 0 460px;
   max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.loadout-image-wrap {
   min-height: 0;
   height: auto;
   padding: 0;
   background: transparent;
   display: block;
   overflow: visible;
-  margin-left: auto;
 }
 .loadout-image-wrap img {
   width: 100%;
@@ -270,9 +278,43 @@
   display: block;
 }
 .loadout-card:hover .loadout-image-wrap img { transform: none; }
+/* Two even columns instead of one cluster hugging the left edge and one
+   pushed to the far right — that split-apart look was the "estranho"
+   button spacing. */
+.loadout-side-actions .loadout-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.loadout-side-actions .loadout-action-left,
+.loadout-side-actions .loadout-action-right {
+  margin-left: 0;
+  align-items: stretch;
+}
+.loadout-side-actions .loadout-action-left button,
+.loadout-side-actions .loadout-action-right button {
+  width: 100%;
+  justify-content: center;
+}
+/* This column has room now (460px), so the buttons don't need to stay in
+   their cramped "compact" size — bigger targets, easier to tap. */
+.loadout-side-actions .hard-vote-compact {
+  min-height: 42px;
+  padding: 9px 12px;
+  font-size: 11px;
+}
+.loadout-side-actions .hard-vote-compact em { font-size: 10px; }
+.loadout-side-actions .calculator-button,
+.loadout-side-actions .copy-floor-inline {
+  min-height: 42px;
+  padding: 9px 12px;
+  font-size: 11px;
+}
+/* Grows to fill exactly the space between the text and the fixed-width
+   image/actions column on the right — no more fixed 620px box leaving a
+   gap in the middle when the text itself is shorter than that. */
 .loadout-copy {
-  flex: 0 1 620px;
-  max-width: 620px;
+  flex: 1 1 280px;
   min-width: 220px;
   min-height: 0;
   padding: 4px 0;
@@ -297,7 +339,7 @@
 
 @media (max-width: 900px) {
   .loadout-card { gap: 4px; flex-direction: column; }
-  .loadout-image-wrap { flex-basis: 100%; margin-left: 0; }
+  .loadout-side { flex-basis: 100%; margin-left: 0; }
   .loadout-image-wrap img { max-width: 100%; }
   .loadout-copy { flex-basis: 100%; max-width: 100%; padding: 10px 0 4px; }
 }
@@ -433,13 +475,10 @@
 /* Community features */
 .floor-number {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
 }
-.floor-number small { white-space: nowrap; max-width: 100%; }
 .floor-number b { font: inherit; }
 .hard-badge {
   display: inline-flex;
@@ -585,7 +624,7 @@
 .floor-card.is-cleared .floor-summary { background: linear-gradient(90deg, rgba(88,214,164,.06), transparent 26%); }
 .cleared-check-badge {
   display: inline-flex; align-items: center; justify-content: center;
-  padding: 3px 5px; margin-left: 0;
+  padding: 3px 5px; margin-left: 6px;
   border: 1px solid rgba(88,214,164,.4); background: rgba(88,214,164,.14); color: #7be0b8;
   border-radius: 4px; font: 800 8px 'Inter', sans-serif; letter-spacing: .5px;
 }
@@ -655,12 +694,21 @@
 
   .loadout-section { padding: 12px 14px 16px; }
   .loadout-card { gap: 10px; }
-  .loadout-image-wrap { flex-basis: 100%; min-height: 0; height: auto; padding: 0; }
+  .loadout-side { flex-basis: 100%; }
+  .loadout-image-wrap { min-height: 0; height: auto; padding: 0; }
   .loadout-image-wrap img { width: 100%; max-width: 100%; height: auto; object-fit: contain; }
   .loadout-copy { flex-basis: 100%; padding: 4px 0 14px; }
   .loadout-community { margin-top: 12px; }
   .hard-vote-button { min-height: 32px; padding: 6px 9px; }
   .loadout-actions-row { justify-content: stretch; }
+  /* On a phone the loadout column is full-width anyway — stack the 4
+     buttons in one column instead of 2, so each stays a comfortable,
+     easy-to-tap full-width target instead of squeezing side by side. */
+  .loadout-side { gap: 16px; }
+  .loadout-side-actions .loadout-actions-row { grid-template-columns: 1fr; gap: 8px; }
+  .loadout-side-actions .hard-vote-compact,
+  .loadout-side-actions .calculator-button,
+  .loadout-side-actions .copy-floor-inline { min-height: 44px; }
   .copy-floor-inline { width: 100%; margin-left: 0; justify-content: center; }
   .cleared-toggle-button { width: 100%; justify-content: center; }
   .cleared-progress { margin: 8px 0; }
@@ -793,6 +841,13 @@
 }
 
 
-@media (max-width: 560px) {
-  .floor-number .hard-badge, .floor-number .cleared-check-badge { padding: 2px 3px; font-size: 7px; letter-spacing: .3px; }
+/* Floor number column: badges (HARD / CLEARED) stack under the number so
+   they never overlap the stage/boss column. */
+.floor-summary .floor-number {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
 }
+.floor-summary .floor-number .cleared-check-badge,
+.floor-summary .floor-number .hard-badge { margin-left: 0; white-space: nowrap; }

@@ -69,10 +69,6 @@ function cleanModifier(value) {
   return EMPTY_VALUES.has(modifier.toLowerCase()) ? '' : modifier;
 }
 
-function fetchTowerData() {
-  return fetchTowerDataJSONP();
-}
-
 function validateTowerPayload(payload) {
   if (!payload || payload.success !== true) {
     throw new Error(payload?.error || 'The API returned an invalid response.');
@@ -85,74 +81,130 @@ function validateTowerPayload(payload) {
   return payload.floors;
 }
 
-function fetchTowerDataJSONP() {
+// ---------------------------------------------------------------------
+// TOWER DATA LOADING
+// Google Apps Script has "cold starts": the first request after it has been
+// idle can take 10-40s. The old code aborted + restarted the request every
+// 18s, which threw away work already in progress and restarted the cold
+// start. Now we:
+//   1) keep the first request ALIVE (never abort it),
+//   2) fire extra "hedged" requests at 7s and 16s in parallel,
+//   3) accept whichever answers first,
+//   4) also try a static snapshot (data/floors.json) served by GitHub Pages,
+//      which is instant, and only use it if the API hasn't answered yet.
+// ---------------------------------------------------------------------
+const TOWER_HEDGE_DELAYS_MS = [0, 7000, 16000];
+const TOWER_TOTAL_TIMEOUT_MS = 60000;
+
+// One JSONP request. Resolves with floors, rejects on error. Never times out
+// on its own (the caller decides), so a slow cold start can still finish.
+function jsonpTowerRequest(tag) {
   return new Promise((resolve, reject) => {
-    let attempt = 0;
-    let lastError = null;
+    const callbackName = `towerGoyCallback_${Date.now()}_${tag}_${Math.random().toString(36).slice(2)}`;
+    const script = document.createElement('script');
 
-    const runAttempt = () => {
-      attempt += 1;
-
-      const callbackName = `towerGoyCallback_${Date.now()}_${attempt}_${Math.random().toString(36).slice(2)}`;
-      const script = document.createElement('script');
-      let finished = false;
-      let timeoutId = null;
-
-      const finish = (callback) => {
-        if (finished) return;
-        finished = true;
-        if (timeoutId) clearTimeout(timeoutId);
-        delete window[callbackName];
-        script.remove();
-        callback();
-      };
-
-      window[callbackName] = (payload) => {
-        try {
-          const data = validateTowerPayload(payload);
-          finish(() => resolve(data));
-        } catch (error) {
-          lastError = error;
-          finish(() => {
-            if (attempt < 3) {
-              setTimeout(runAttempt, 400);
-            } else {
-              reject(error);
-            }
-          });
-        }
-      };
-
-      script.onerror = () => {
-        lastError = new Error('Could not load the Apps Script Web App.');
-        finish(() => {
-          if (attempt < 3) {
-            setTimeout(runAttempt, 400);
-          } else {
-            reject(new Error('Could not load the Apps Script Web App. Check the /exec URL and deployment permissions.'));
-          }
-        });
-      };
-
-      timeoutId = setTimeout(() => {
-        const timeoutError = new Error('The Apps Script API did not return data within the allowed time.');
-        lastError = timeoutError;
-        finish(() => {
-          if (attempt < 3) {
-            setTimeout(runAttempt, 400);
-          } else {
-            reject(lastError || timeoutError);
-          }
-        });
-      }, 18000);
-
-      const separator = SHEETS_API_URL.includes('?') ? '&' : '?';
-      script.src = `${SHEETS_API_URL}${separator}callback=${encodeURIComponent(callbackName)}&_=${Date.now()}`;
-      script.async = true;
-      script.referrerPolicy = 'no-referrer';
-      document.head.appendChild(script);
+    const cleanup = () => {
+      // Keep a no-op callback so a late response doesn't throw a ReferenceError.
+      window[callbackName] = () => {};
+      script.remove();
+      setTimeout(() => { try { delete window[callbackName]; } catch (_) {} }, 120000);
     };
 
-    runAttempt();
+    window[callbackName] = (payload) => {
+      try {
+        const data = validateTowerPayload(payload);
+        cleanup();
+        resolve(data);
+      } catch (error) {
+        cleanup();
+        reject(error);
+      }
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error('Could not load the Apps Script Web App. Check the /exec URL and deployment permissions.'));
+    };
+
+    const separator = SHEETS_API_URL.includes('?') ? '&' : '?';
+    script.src = `${SHEETS_API_URL}${separator}callback=${encodeURIComponent(callbackName)}&_=${Date.now()}`;
+    script.async = true;
+    script.referrerPolicy = 'no-referrer';
+    document.head.appendChild(script);
   });
 }
+
+// Races several staggered requests; first success wins. Rejects only when
+// every request failed or the overall timeout is reached.
+function fetchTowerDataFromApi() {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let failures = 0;
+    let launched = 0;
+    let lastError = null;
+    const timers = [];
+
+    const done = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      timers.forEach(clearTimeout);
+      fn(value);
+    };
+
+    const launch = (index) => {
+      if (settled) return;
+      launched += 1;
+      jsonpTowerRequest(index).then(
+        (data) => done(resolve, data),
+        (error) => {
+          lastError = error;
+          failures += 1;
+          // A hard failure (network/script error) on every launched request
+          // and nothing left to launch -> give up.
+          if (failures >= TOWER_HEDGE_DELAYS_MS.length) done(reject, lastError);
+          // A failed request shouldn't make us wait for the next hedge timer.
+          else if (failures === launched) launch(launched);
+        }
+      );
+    };
+
+    TOWER_HEDGE_DELAYS_MS.forEach((delay, index) => {
+      if (delay === 0) launch(index);
+      else timers.push(setTimeout(() => launch(index), delay));
+    });
+
+    timers.push(setTimeout(
+      () => done(reject, lastError || new Error('The Apps Script API did not return data within the allowed time.')),
+      TOWER_TOTAL_TIMEOUT_MS
+    ));
+  });
+}
+
+// Static snapshot shipped with the site (data/floors.json). Optional: if the
+// file is missing or invalid this resolves to null.
+async function fetchTowerSnapshot() {
+  try {
+    const response = await fetch('data/floors.json', { cache: 'no-cache' });
+    if (!response.ok) return null;
+    const payload = await response.json();
+    const floors = Array.isArray(payload) ? payload : payload?.floors;
+    return Array.isArray(floors) && floors.length ? floors : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+// Start the API request as early as possible (as soon as this script runs)
+// and share the same promise with init().
+let towerApiPromise = null;
+function fetchTowerData() {
+  if (!towerApiPromise) {
+    towerApiPromise = fetchTowerDataFromApi();
+    // Allow a later retry (e.g. "Try again" button) to start fresh.
+    towerApiPromise.catch(() => { towerApiPromise = null; });
+  }
+  return towerApiPromise;
+}
+
+// Kick off the request right away, before main.js even runs.
+fetchTowerData().catch(() => {});

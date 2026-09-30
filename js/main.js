@@ -65,7 +65,7 @@ function renderSkeletons(count = 8, message = 'Loading tower data...') {
   listEl.innerHTML = `<div class="skeleton-list"><p class="skeleton-message" id="skeletonMessage">${escapeHTML(message)}</p>${cards}</div>`;
   renderSkeletons._msgTimer = setTimeout(() => {
     const msgEl = $('#skeletonMessage');
-    if (msgEl) msgEl.textContent = 'Still loading — the community database can be slow to wake up. Hang tight...';
+    if (msgEl) msgEl.textContent = 'Still loading — the database is waking up (first load after a while can take up to ~30s). Hang tight...';
   }, 6000);
 }
 
@@ -216,7 +216,7 @@ function getBossHPDisplay(floor) {
     return { base: baseRaw, actual: actualRaw || baseRaw, automatic: false };
   }
 
-  const effect = (actual, note = '') => ({ base: baseRaw, actual: `${actual} ${note}`.trim(), automatic: true });
+  const effect = (actual, note) => ({ base: baseRaw, actual: `${actual} ${note}`, automatic: true });
 
   switch (modifier) {
     case 'Tartaros':
@@ -231,15 +231,16 @@ function getBossHPDisplay(floor) {
     case 'Reinforced':
       return effect(formatCompactHP(baseNumber * 1.3), '(+30%)');
     case 'Splitter': {
-      // Only HP values: base + (3 respawned enemies at 33% of base each)
       const splitHP = formatCompactHP(baseNumber * 0.33);
-      return effect(`${baseRaw} + (3 × ${splitHP})`);
+      return { base: baseRaw, actual: `${baseRaw} + (3 × ${splitHP})`, automatic: true };
     }
     case 'Summoner': {
-      // Only HP values: base + (summoned enemy range, 26%–39% of base HP)
+      // Summoned adds are roughly 26%-39% of the boss's HP (observed range
+      // is closer to 25.8%-26% and 38.7%-39%, so 26/39 is used as a clean
+      // approximation of both ends).
       const low = formatCompactHP(baseNumber * 0.26);
       const high = formatCompactHP(baseNumber * 0.39);
-      return effect(`${baseRaw} (${low} - ${high})`);
+      return { base: baseRaw, actual: `${baseRaw} (${low} - ${high})`, automatic: true };
     }
     default:
       return { base: baseRaw, actual: baseRaw, automatic: true };
@@ -550,14 +551,16 @@ function loadoutHTML(floor) {
     </div>`;
 
   return `<div class="loadout-card" data-floor-loadout="${escapeHTML(floorNumber)}" data-active-loadout="${activeType}">
-    <div class="loadout-image-wrap"><img src="${escapeHTML(activeLoadout.image)}" alt="${escapeHTML(activeLoadout.title)} for Floor ${floorNumber}" loading="lazy" decoding="async"></div>
+    <div class="loadout-side">
+      <div class="loadout-image-wrap"><img src="${escapeHTML(activeLoadout.image)}" alt="${escapeHTML(activeLoadout.title)} for Floor ${floorNumber}" loading="lazy" decoding="async"></div>
+      <div class="loadout-side-actions">${communityActionsHTML(floor)}</div>
+    </div>
     <div class="loadout-copy">
       ${tabs}
       <span class="section-label">LOADOUT</span>
       <strong class="loadout-title">${escapeHTML(activeLoadout.title)}</strong>
       <div class="loadout-community">
         ${strategyHTML(floor) || suggestStrategyButtonHTML(floor)}
-        ${communityActionsHTML(floor)}
       </div>
     </div>
   </div>`;
@@ -598,17 +601,21 @@ function floorDetails(floor) {
       <section class="info-panel"><div class="panel-title"><span>03</span><strong>Resistances</strong></div><div class="resistance-list">${resistanceHTML('Magical', floor.resistances?.magical)}${resistanceHTML('Physical', floor.resistances?.physical)}</div></section>
       <section class="info-panel affinity-panel"><div class="panel-title"><span>04</span><strong>Affinities</strong></div><div class="affinity-list">${affinities.length ? affinities.map(affinityHTML).join('') : '<span class="muted-value">No affinities listed.</span>'}</div></section>
     </div>
-    <div class="loadout-section">${loadoutHTML(floor)}${!hasAnyLoadout(floor.floor) ? `<div class="loadout-community-fallback">
+    <div class="loadout-section">${loadoutSectionInner(floor)}</div></div></div>`;
+}
+
+function loadoutSectionInner(floor) {
+  return `${loadoutHTML(floor)}${!hasAnyLoadout(floor.floor) ? `<div class="loadout-community-fallback">
         ${strategyHTML(floor) || suggestStrategyButtonHTML(floor)}
         ${communityActionsHTML(floor)}
-      </div>` : ''}</div></div></div>`;
+      </div>` : ''}`;
 }
 
 function refreshVisibleLoadouts() {
   $$('.floor-card').forEach(card => {
     const floor = floors.find(item => String(item.floor) === card.dataset.floor);
     const section = card.querySelector('.loadout-section');
-    if (floor && section) { section.outerHTML = `<div class="loadout-section">${loadoutHTML(floor)}</div>`; bindLoadoutTabs(card); bindSuggestButtons(card); bindHardVoteButtons(card); bindClearedButtons(card); bindCounterCalculators(card); }
+    if (floor && section) { section.outerHTML = `<div class="loadout-section">${loadoutSectionInner(floor)}</div>`; bindLoadoutTabs(card); bindSuggestButtons(card); bindHardVoteButtons(card); bindClearedButtons(card); bindCounterCalculators(card); }
   });
 }
 
@@ -678,7 +685,11 @@ function render() {
     sortAscending ? Number(a.floor) - Number(b.floor) : Number(b.floor) - Number(a.floor)
   );
 
-  listEl.innerHTML = ordered.map(floorCard).join('');
+  // One broken floor must never blank the whole list.
+  listEl.innerHTML = ordered.map(floor => {
+    try { return floorCard(floor); }
+    catch (error) { console.error('Could not render floor', floor?.floor, error); return ''; }
+  }).join('');
   bindLoadoutTabs(listEl);
   bindHardVoteButtons(listEl);
   bindClearedButtons(listEl);
@@ -862,7 +873,7 @@ function bindHardVoteButtons(scope = document) {
       try {
         const voted = await voteHard(floorNumber);
         if (!voted) return;
-        await refreshSharedVotesUI();
+        refreshVoteButtonsOnly();
         const scrollY = window.scrollY;
         render();
         requestAnimationFrame(() => {
@@ -917,7 +928,7 @@ function refreshVoteButtonsOnly() {
 async function refreshSharedVotesUI() {
   try {
     const before = JSON.stringify(sharedHardVotes);
-    await loadSharedVotes();
+    await loadSharedVotes(true);
     const changed = before !== JSON.stringify(sharedHardVotes);
     if (!changed) return;
     if (activeFilter === 'hard') {
@@ -936,51 +947,78 @@ function startVotesRefresh() {
   window.addEventListener('focus', refreshSharedVotesUI);
 }
 
+function applyFloors(list) {
+  floors = list.filter(floor => Number.isInteger(Number(floor.floor)));
+  floors.sort((a, b) => Number(a.floor) - Number(b.floor));
+  if (countEl) countEl.textContent = floors.length;
+  updateHomeStatsAnimated();
+  populateStageFilter();
+  render();
+  handleRoute();
+}
+
+// Votes live on a separate Apps Script that can also be slow. Never block the
+// floor list on it: load in the background and update the UI when it arrives.
+function loadVotesInBackground() {
+  loadSharedVotes()
+    .then(() => { activeFilter === 'hard' ? render() : refreshVoteButtonsOnly(); })
+    .catch(voteError => console.warn('Shared votes could not be loaded:', voteError))
+    .finally(startVotesRefresh);
+}
+
 async function init() {
   const cached = loadCachedFloors();
+  let haveData = false;
 
   if (cached) {
-    floors = cached.floors.filter(floor => Number.isInteger(Number(floor.floor)));
-    floors.sort((a, b) => Number(a.floor) - Number(b.floor));
-    if (countEl) countEl.textContent = floors.length;
-    updateHomeStatsAnimated();
-    populateStageFilter();
-    setStatus('', 'Showing cached data — syncing...');
-    render();
-    handleRoute();
-  } else {
+    try {
+      applyFloors(cached.floors);
+      haveData = floors.length > 0;
+    } catch (error) {
+      console.warn('Cached floors could not be rendered:', error);
+    }
+    if (haveData) setStatus('', 'Showing cached data — syncing...');
+  }
+
+  if (!haveData) {
     renderSkeletons(8, 'Loading tower data — first load can take a few seconds...');
     resultCountEl.textContent = 'Loading...';
     setStatus('', 'Syncing');
+
+    // No local cache (first visit): show the static snapshot instantly while
+    // the live API wakes up in the background.
+    fetchTowerSnapshot().then(snapshot => {
+      if (!snapshot || haveData || floors.length) return;
+      try {
+        applyFloors(snapshot);
+        haveData = true;
+        setStatus('', 'Showing saved data — syncing...');
+      } catch (error) {
+        console.warn('Snapshot could not be rendered:', error);
+      }
+    });
   }
 
-  try {
-    const [, freshFloors] = await Promise.all([loadStrategies(), fetchTowerData()]);
-    floors = freshFloors.filter(floor => Number.isInteger(Number(floor.floor)));
-    floors.sort((a, b) => Number(a.floor) - Number(b.floor));
-    saveCachedFloors(floors);
+  // Strategies are a local file and must not delay (or break) the floors.
+  loadStrategies().then(() => { if (floors.length) render(); });
 
-    if (countEl) countEl.textContent = floors.length;
-    updateHomeStatsAnimated();
-    populateStageFilter();
+  try {
+    const freshFloors = await fetchTowerData();
+    saveCachedFloors(freshFloors.filter(floor => Number.isInteger(Number(floor.floor))));
+    haveData = true;
+    applyFloors(freshFloors);
     setStatus('online', 'Synchronized');
-    try {
-      await loadSharedVotes(20000);
-    } catch (voteError) {
-      console.warn('Shared votes could not be loaded:', voteError);
-    }
-    startVotesRefresh();
-    render();
-    handleRoute();
+    loadVotesInBackground();
     detectLoadouts(floors).then(() => {
       if (activeFilter === 'loadout') render();
       else refreshVisibleLoadouts();
     });
   } catch (error) {
     console.error(error);
-    if (cached) {
-      // Keep showing the cached list — just flag that the refresh failed.
-      setStatus('error', 'Could not refresh — showing cached data');
+    if (haveData || floors.length) {
+      // Keep showing what we have — just flag that the refresh failed.
+      setStatus('error', 'Could not refresh — showing saved data');
+      loadVotesInBackground();
     } else {
       setStatus('error', 'API error');
       listEl.innerHTML = `<div class="error-card"><strong>The Tower data could not be loaded.</strong><span>${escapeHTML(error.message)}</span><small>Check the Apps Script web app deployment and refresh the page.</small><button class="small-button retry-button" id="retryFetch" type="button">↻ Try again</button></div>`;
@@ -1004,10 +1042,7 @@ const UPDATE_LOG_HISTORY = [
     id: '1.25',
     categories: {
       Changes: [],
-      Strategies: [
-        {title: 'Floors', description: 'All Floors 100-300 have now HPs, Bosses and modifiers'},
-        {title: 'Loadouts', description: 'Added Info for floors 215-238'}
-      ],
+      Strategies: [{title: 'Floors', description: 'All Floors 100-300 have now HPs, Bosses and modifiers'}],
       Uis: []
     }
   },
@@ -1017,7 +1052,7 @@ const UPDATE_LOG_HISTORY = [
       Changes: [
         { title: 'Floor Cleared tracker', description: 'Mark any floor as cleared from its details panel and track your overall progress with the new bar above the floor list. Filter the list to only your cleared floors with the new "Cleared" button.' },
         { title: 'Counter Calculator', description: 'Every floor now has a built-in calculator — pick an archetype and an element to estimate the damage multiplier against that boss.' },
-        { title: 'Modifier HP values', description: 'Added automatic Actual HP calculations while keeping Base HP unchanged. Actual HP now represents the Base HP plus the HP added by the modifier: Tartaros/Greed show +10% HP per 10s, Transformer +50%, Reinforced +30%, Veil +200%, Splitter shows the original HP plus its 3 respawned enemies, and Summoner shows the original HP plus the range of the summoned enemy HP (26%–39%). Manual Actual HP values from the Sheet still override the automatic calculation.' },
+        { title: 'Modifier HP values', description: 'Added automatic Actual HP calculations while keeping Base HP unchanged. Actual HP now represents the Base HP plus the HP added by the modifier: Tartaros/Greed show +10% HP per 10s, Transformer +50%, Reinforced +30%, Veil +200%, and Splitter shows the original HP plus 3 respawned enemies with 33% of the original HP each. Manual Actual HP values from the Sheet still override the automatic calculation.' },
         { title: 'Modifier icons and colors', description: 'Added Splitter, Retaliation Counter, Zombie, Veil and Reinforced icon support with their configured modifier colors.' }
       ],
       Strategies: [],

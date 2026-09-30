@@ -4,23 +4,6 @@ const TOWER_VOTER_ID_KEY = 'towerOfGoyVoterId:v1';
 let sharedHardVotes = {};
 let sharedHardVoted = {};
 
-const VOTE_TIMEOUT_MS = 45000;      // Apps Script cold starts can be slow
-const VOTE_READ_RETRY_MS = 8000;    // 'all' reads fire a 2nd parallel attempt after this
-const LOCAL_VOTED_KEY = 'towerOfGoyHardVoted:v1';
-
-// Local memory of floors this browser already voted on, so the UI never
-// "forgets" a vote if a later server read fails. The server stays the source of truth.
-const localVoted = new Set();
-try {
-  const raw = localStorage.getItem(LOCAL_VOTED_KEY);
-  if (raw) JSON.parse(raw).forEach(f => localVoted.add(String(f)));
-} catch (_) {}
-
-function rememberVoted(floor) {
-  localVoted.add(String(floor));
-  try { localStorage.setItem(LOCAL_VOTED_KEY, JSON.stringify([...localVoted])); } catch (_) {}
-}
-
 function getVoterId() {
   let id = '';
   try { id = localStorage.getItem(TOWER_VOTER_ID_KEY) || ''; } catch (_) {}
@@ -36,7 +19,9 @@ function votesApiReady() {
   return TOWER_VOTES_API_URL && !TOWER_VOTES_API_URL.includes('PASTE_YOUR_VOTE_WEB_APP_URL_HERE');
 }
 
-function voteJSONPOnce(params = {}, timeoutMs = VOTE_TIMEOUT_MS) {
+// One JSONP request to the votes Apps Script. The timeout is generous because
+// Apps Script cold starts can take 15-40s; a late reply is ignored safely.
+function voteJSONP(params = {}, timeoutMs = 45000) {
   return new Promise((resolve, reject) => {
     if (!votesApiReady()) {
       reject(new Error('Shared voting endpoint is not configured yet.'));
@@ -49,16 +34,14 @@ function voteJSONPOnce(params = {}, timeoutMs = VOTE_TIMEOUT_MS) {
     let finished = false;
     let timeout = null;
 
-    const cleanup = () => {
-      if (script.parentNode) script.parentNode.removeChild(script);
-      try { delete window[callbackName]; } catch (_) { window[callbackName] = undefined; }
-    };
-
     const finish = (fn, value) => {
       if (finished) return;
       finished = true;
       clearTimeout(timeout);
-      cleanup();
+      script.remove();
+      // Keep a harmless callback around so a late response can't throw.
+      window[callbackName] = () => {};
+      setTimeout(() => { try { delete window[callbackName]; } catch (_) {} }, 120000);
       fn(value);
     };
 
@@ -67,74 +50,63 @@ function voteJSONPOnce(params = {}, timeoutMs = VOTE_TIMEOUT_MS) {
     script.src = `${TOWER_VOTES_API_URL}${TOWER_VOTES_API_URL.includes('?') ? '&' : '?'}${query.toString()}`;
     document.head.appendChild(script);
 
-    timeout = setTimeout(() => {
-      const error = new Error('Shared voting service timed out.');
-      error.isTimeout = true;
-      finish(reject, error);
-    }, timeoutMs);
+    timeout = setTimeout(() => finish(reject, new Error('Shared voting service timed out.')), timeoutMs);
   });
 }
 
-// Reads ('all') are safe to repeat: if the first request is still waiting after
-// 8s (cold start), fire a second one in parallel and take whichever answers first.
-// Writes ('vote') are never duplicated.
-function voteJSONP(params = {}) {
-  if (params.action !== 'all') return voteJSONPOnce(params);
-
+// Reading votes is safe to repeat, so race a second request if the first is
+// slow (cold start) and take whichever answers first.
+function voteReadHedged(params) {
   return new Promise((resolve, reject) => {
     let settled = false;
-    let failures = 0;
-    let started = 1;
-    let lastError = null;
-
-    const onSuccess = data => { if (!settled) { settled = true; clearTimeout(retryTimer); resolve(data); } };
-    const onFailure = error => {
-      lastError = error;
-      failures += 1;
-      // Failed early (e.g. network error) -> start the 2nd attempt right away if not started yet
-      if (started === 1 && !settled) { startSecond(); return; }
-      if (!settled && failures >= started) { settled = true; clearTimeout(retryTimer); reject(lastError); }
-    };
-    const startSecond = () => {
-      if (settled || started >= 2) return;
-      clearTimeout(retryTimer);
-      started = 2;
-      voteJSONPOnce(params).then(onSuccess, onFailure);
-    };
-
-    voteJSONPOnce(params).then(onSuccess, onFailure);
-    const retryTimer = setTimeout(startSecond, VOTE_READ_RETRY_MS);
+    let failed = 0;
+    const total = 2;
+    const ok = data => { if (!settled) { settled = true; resolve(data); } };
+    const fail = err => { failed += 1; if (!settled && failed >= total) reject(err); };
+    voteJSONP(params).then(ok, fail);
+    setTimeout(() => { if (!settled) voteJSONP(params).then(ok, fail); else failed = total; }, 8000);
   });
 }
 
-let sharedVotesInflight = null;
-let sharedVotesLoadedAt = 0;
+function applyVotesPayload(data) {
+  if (!data?.success) throw new Error(data?.error || 'Could not load shared votes.');
+  sharedHardVotes = data.votes && typeof data.votes === 'object' ? data.votes : {};
+  // Merge: never forget a floor we already know this device voted for.
+  const serverVoted = data.voted && typeof data.voted === 'object' ? data.voted : {};
+  sharedHardVoted = { ...readLocalVoted(), ...serverVoted };
+}
 
-// maxAgeMs: reuse a load that finished less than this long ago (used by init after the warm-up call).
-function loadSharedVotes(maxAgeMs = 0) {
+// Locally remembered votes (this browser). The server is still the source of
+// truth for counts and for "one vote per person per floor".
+const LOCAL_VOTED_KEY = 'towerOfGoyVotedFloors:v1';
+function readLocalVoted() {
+  try {
+    const list = JSON.parse(localStorage.getItem(LOCAL_VOTED_KEY) || '[]');
+    return Object.fromEntries((Array.isArray(list) ? list : []).map(f => [String(f), true]));
+  } catch (_) { return {}; }
+}
+function rememberLocalVote(floorKey) {
+  try {
+    const list = Object.keys(readLocalVoted());
+    if (!list.includes(String(floorKey))) list.push(String(floorKey));
+    localStorage.setItem(LOCAL_VOTED_KEY, JSON.stringify(list));
+  } catch (_) {}
+}
+
+let votesLoadPromise = null;
+function loadSharedVotes(force = false) {
   if (!votesApiReady()) return Promise.resolve(false);
-  if (sharedVotesInflight) return sharedVotesInflight;
-  if (maxAgeMs && sharedVotesLoadedAt && Date.now() - sharedVotesLoadedAt < maxAgeMs) return Promise.resolve(true);
-
-  sharedVotesInflight = (async () => {
-    const data = await voteJSONP({ action: 'all', voter: getVoterId() });
-    if (!data?.success) throw new Error(data?.error || 'Could not load shared votes.');
-    sharedHardVotes = data.votes && typeof data.votes === 'object' ? data.votes : {};
-    sharedHardVoted = data.voted && typeof data.voted === 'object' ? data.voted : {};
-    Object.keys(sharedHardVoted).forEach(floor => { if (sharedHardVoted[floor] === true) rememberVoted(floor); });
-    sharedVotesLoadedAt = Date.now();
-    return true;
-  })().finally(() => { sharedVotesInflight = null; });
-
-  return sharedVotesInflight;
+  if (votesLoadPromise && !force) return votesLoadPromise;
+  votesLoadPromise = voteReadHedged({ action: 'all', voter: getVoterId() })
+    .then(data => { applyVotesPayload(data); return true; })
+    .catch(error => { votesLoadPromise = null; throw error; });
+  return votesLoadPromise;
 }
 
-// Wake the voting Apps Script as soon as the page opens (in parallel with the floors script).
-// init() reuses this in-flight request instead of starting a new one.
-function warmVotesService() {
-  loadSharedVotes().catch(() => {});
-}
-warmVotesService();
+// Wake the votes Apps Script up as soon as the page opens, in parallel with
+// the floors request, so it's ready by the time someone clicks Vote Hard.
+sharedHardVoted = readLocalVoted();
+if (votesApiReady()) loadSharedVotes().catch(() => {});
 
 function getHardVotes(floor) {
   const value = Number(sharedHardVotes[String(floor)] || 0);
@@ -142,31 +114,34 @@ function getHardVotes(floor) {
 }
 
 function hasVotedHard(floor) {
-  return sharedHardVoted[String(floor)] === true || localVoted.has(String(floor));
+  return sharedHardVoted[String(floor)] === true;
 }
 
 async function voteHard(floor) {
   const floorKey = String(floor);
   if (hasVotedHard(floorKey) || !votesApiReady()) return false;
 
-  let data;
+  let data = null;
   try {
-    data = await voteJSONPOnce({ action: 'vote', floor: floorKey, voter: getVoterId() });
+    data = await voteJSONP({ action: 'vote', floor: floorKey, voter: getVoterId() }, 45000);
   } catch (error) {
-    // The vote may have been registered even though the response never arrived.
-    // Check the server before reporting a failure.
-    if (error?.isTimeout) {
-      try {
-        await loadSharedVotes();
-        if (sharedHardVoted[floorKey] === true) { rememberVoted(floorKey); return true; }
-      } catch (_) {}
-    }
-    throw error;
+    // The request may have reached the server even though the reply didn't
+    // reach us (timeout). Check before telling the person it failed.
+    try {
+      const check = await voteJSONP({ action: 'all', voter: getVoterId() }, 30000);
+      if (check?.success && check.voted?.[floorKey] === true) {
+        sharedHardVotes = check.votes && typeof check.votes === 'object' ? check.votes : sharedHardVotes;
+        sharedHardVoted[floorKey] = true;
+        rememberLocalVote(floorKey);
+        return true;
+      }
+    } catch (_) {}
+    throw new Error('The voting service is waking up and did not answer in time. Please try again in a few seconds.');
   }
 
   if (!data?.success) throw new Error(data?.error || 'Could not register the vote.');
   sharedHardVotes = data.votes && typeof data.votes === 'object' ? data.votes : sharedHardVotes;
   sharedHardVoted[floorKey] = true;
-  rememberVoted(floorKey);
+  rememberLocalVote(floorKey);
   return true;
 }
