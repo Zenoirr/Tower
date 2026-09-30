@@ -104,14 +104,23 @@ function setStatus(type, text) {
 const LOCAL_ICON_FILES = {
   elements: { Hydro: 'hydro.png', Gale: 'gale.png', Wind: 'gale.png', Terra: 'terra.png', Fire: 'fire.png', Flame: 'fire.png', Storm: 'storm.png', Light: 'light.png', Dark: 'dark.png' },
   archetypes: { Magical: 'magical.png', Physical: 'physical.png', Psychic: 'psychic.png' },
-  modifiers: { Bulwark: 'bulwark.png', 'Zone Debuff': 'zone_debuff.png', Transformer: 'transformer.png', Greed: 'greed.png', Shielded: 'shielded.png', Summoner: 'summoner.png', Burrowing: 'burrowing.png', Tartaros: 'tartaros.png', Momentum: 'momentum.png', 'Status Cleanse': 'status_cleanse.png', Commander: 'commander.png', Stunner: 'stunner.png', Sword: 'sword.png' }
+  modifiers: {
+    Bulwark: 'bulwark.png', 'Zone Debuff': 'zone_debuff.png', Transformer: 'transformer.png', Greed: 'greed.png',
+    Shielded: 'shielded.png', Summoner: 'summoner.png', Burrowing: 'burrowing.png', Tartaros: 'tartaros.png',
+    Momentum: 'momentum.png', 'Status Cleanse': 'status_cleanse.png', Commander: 'commander.png',
+    Stunner: 'stunner.png', Sword: 'sword.png',
+    // These four already had a .png sitting in assets/modifiers/ — they just
+    // weren't wired up here, so they were silently falling through to the
+    // (uncolored) remote .webp below instead of using the colored local file.
+    Splitter: 'splitter.png', Veil: 'veil.png', Zombie: 'zombie.png', 'Retaliation Counter': 'retaliation_counter.png'
+  }
 };
 
+// Fallback only: used when a modifier has no local PNG in assets/modifiers/
+// yet (right now, just Reinforced). The moment a Reinforced PNG is added to
+// that folder and registered above, it will automatically take priority —
+// iconHTML() always checks LOCAL_ICON_FILES first.
 const REMOTE_MODIFIER_ICONS = {
-  Splitter: 'https://animeexpedition.com/images/modifiers/splitter.webp',
-  Veil: 'https://animeexpedition.com/images/modifiers/veil.webp',
-  Zombie: 'https://animeexpedition.com/images/modifiers/zombie.webp',
-  'Retaliation Counter': 'https://animeexpedition.com/images/modifiers/retaliation-counter.webp',
   Reinforced: 'https://animeexpedition.com/images/modifiers/reinforced.webp'
 };
 
